@@ -13,43 +13,101 @@ class KlaimApiController extends Controller
     private function enrichKlaim($k)
     {
         if (!$k) return null;
+        return $this->enrichKlaims(collect([$k]))->first();
+    }
 
-        $sp = DB::table('sertifikat_penjaminans')->where('id', $k->sertifikat_penjaminan_id)->first();
-        $mitra = DB::table('mitras')->where('id', $k->mitra_id)->first();
-        $penyebab = DB::table('penyebab_klaims')->where('id', $k->penyebab_klaim_id)->first();
-        $status = DB::table('klaim_statuses')->where('id', $k->status_id)->first();
+    // Versi batch dari enrichKlaim(): dulu setiap klaim di-enrich dengan ~15-25 query
+    // terpisah (sertifikat, mitra, penyebab, status, dokumen +N jenis dokumen, histori,
+    // survey, BA, SK, esign +N pejabat, memo, pembayaran, banding) - kalau dipanggil untuk
+    // daftar N klaim jadi N x ~20 query (N+1). Di sini semua data terkait diambil sekaligus
+    // per tabel pakai whereIn(), lalu di-pasangkan di memori. Output per klaim persis sama
+    // dengan enrichKlaim() versi lama, jadi tidak ada perubahan kontrak API ke frontend.
+    private function enrichKlaims($klaims)
+    {
+        $klaims = $klaims->values();
+        if ($klaims->isEmpty()) return collect();
 
-        $rawDocs = DB::table('klaim_documents')->where('klaim_id', $k->id)->get();
-        $docs = $rawDocs->map(function ($d) {
-            $j = DB::table('jenis_dokumens')->where('id', $d->jenis_dokumen_id)->first();
-            return [
-                'id' => $d->id,
-                'klaimId' => $d->klaim_id,
-                'jenisDokumenId' => $d->jenis_dokumen_id,
-                'ada' => (bool)$d->ada,
-                'filePath' => $d->file_path,
-                'fileName' => $d->file_name,
-                'fileType' => $d->file_type,
-                'kesesuaian' => $d->kesesuaian,
-                'catatanPemeriksaan' => $d->catatan_pemeriksaan,
-                'isReplaced' => (bool)$d->is_replaced,
-                'replacedAt' => $d->replaced_at,
-                'uploadedAt' => $d->uploaded_at,
-                'jenisDokumen' => $j ? [
-                    'id' => $j->id,
-                    'kode' => $j->kode,
-                    'nama' => $j->nama,
-                    'wajib' => (bool)$j->wajib,
-                    'urutan' => $j->urutan
-                ] : null
-            ];
-        });
+        $klaimIds = $klaims->pluck('id')->unique()->values();
+        $spIds = $klaims->pluck('sertifikat_penjaminan_id')->filter()->unique()->values();
+        $mitraIds = $klaims->pluck('mitra_id')->filter()->unique()->values();
+        $penyebabIds = $klaims->pluck('penyebab_klaim_id')->filter()->unique()->values();
+        $statusIds = $klaims->pluck('status_id')->filter()->unique()->values();
 
-        $history = DB::table('klaim_status_histories')
-            ->where('klaim_id', $k->id)
-            ->orderBy('id', 'desc')
-            ->get()
-            ->map(function ($h) {
+        $sps = DB::table('sertifikat_penjaminans')->whereIn('id', $spIds)->get()->keyBy('id');
+        $mitras = DB::table('mitras')->whereIn('id', $mitraIds)->get()->keyBy('id');
+        $penyebabs = DB::table('penyebab_klaims')->whereIn('id', $penyebabIds)->get()->keyBy('id');
+        $statuses = DB::table('klaim_statuses')->whereIn('id', $statusIds)->get()->keyBy('id');
+
+        $allDocs = DB::table('klaim_documents')->whereIn('klaim_id', $klaimIds)->get();
+        $jenisIds = $allDocs->pluck('jenis_dokumen_id')->filter()->unique()->values();
+        $jenisDokumens = DB::table('jenis_dokumens')->whereIn('id', $jenisIds)->get()->keyBy('id');
+        $docsByKlaim = $allDocs->groupBy('klaim_id');
+
+        $allHistory = DB::table('klaim_status_histories')->whereIn('klaim_id', $klaimIds)->orderByDesc('id')->get()->groupBy('klaim_id');
+        $allSurveys = DB::table('surveys')->whereIn('klaim_id', $klaimIds)->get()->keyBy('klaim_id');
+        $allBa = DB::table('berita_acaras')->whereIn('klaim_id', $klaimIds)->orderByDesc('id')->get()->groupBy('klaim_id');
+        $allSk = DB::table('surat_keputusans')->whereIn('klaim_id', $klaimIds)->orderByDesc('id')->get()->groupBy('klaim_id');
+
+        $baIds = $allBa->map(fn ($group) => $group->first()->id)->values();
+        $skIds = $allSk->map(fn ($group) => $group->first()->id)->values();
+
+        $allEsign = collect();
+        if ($baIds->isNotEmpty() || $skIds->isNotEmpty()) {
+            $allEsign = DB::table('esign_signatures')
+                ->where(function ($q) use ($baIds, $skIds) {
+                    $q->where(function ($q2) use ($baIds) {
+                        $q2->where('dokumen_type', 'berita_acara')->whereIn('dokumen_id', $baIds->isNotEmpty() ? $baIds : [0]);
+                    })->orWhere(function ($q2) use ($skIds) {
+                        $q2->where('dokumen_type', 'surat_keputusan')->whereIn('dokumen_id', $skIds->isNotEmpty() ? $skIds : [0]);
+                    });
+                })
+                ->orderBy('pejabat_komite_id')
+                ->get();
+        }
+        $pejabatIds = $allEsign->pluck('pejabat_komite_id')->filter()->unique()->values();
+        $pejabats = DB::table('pejabat_komites')->whereIn('id', $pejabatIds)->get()->keyBy('id');
+        $esignByDoc = $allEsign->groupBy(fn ($s) => $s->dokumen_type . ':' . $s->dokumen_id);
+
+        $allMemos = DB::table('memo_pembayarans')->whereIn('klaim_id', $klaimIds)->orderByDesc('id')->get()->groupBy('klaim_id');
+        $allBayars = DB::table('pembayarans')->whereIn('klaim_id', $klaimIds)->orderByDesc('id')->get()->groupBy('klaim_id');
+        $allBandings = DB::table('bandings')->whereIn('klaim_id', $klaimIds)->orderByDesc('id')->get()->groupBy('klaim_id');
+
+        return $klaims->map(function ($k) use (
+            $sps, $mitras, $penyebabs, $statuses, $docsByKlaim, $jenisDokumens, $allHistory,
+            $allSurveys, $allBa, $allSk, $esignByDoc, $pejabats, $allMemos, $allBayars, $allBandings
+        ) {
+            $sp = $sps->get($k->sertifikat_penjaminan_id);
+            $mitra = $mitras->get($k->mitra_id);
+            $penyebab = $penyebabs->get($k->penyebab_klaim_id);
+            $status = $statuses->get($k->status_id);
+
+            $rawDocs = $docsByKlaim->get($k->id, collect());
+            $docs = $rawDocs->map(function ($d) use ($jenisDokumens) {
+                $j = $jenisDokumens->get($d->jenis_dokumen_id);
+                return [
+                    'id' => $d->id,
+                    'klaimId' => $d->klaim_id,
+                    'jenisDokumenId' => $d->jenis_dokumen_id,
+                    'ada' => (bool)$d->ada,
+                    'filePath' => $d->file_path,
+                    'fileName' => $d->file_name,
+                    'fileType' => $d->file_type,
+                    'kesesuaian' => $d->kesesuaian,
+                    'catatanPemeriksaan' => $d->catatan_pemeriksaan,
+                    'isReplaced' => (bool)$d->is_replaced,
+                    'replacedAt' => $d->replaced_at,
+                    'uploadedAt' => $d->uploaded_at,
+                    'jenisDokumen' => $j ? [
+                        'id' => $j->id,
+                        'kode' => $j->kode,
+                        'nama' => $j->nama,
+                        'wajib' => (bool)$j->wajib,
+                        'urutan' => $j->urutan
+                    ] : null
+                ];
+            });
+
+            $history = $allHistory->get($k->id, collect())->map(function ($h) {
                 return [
                     'id' => $h->id,
                     'klaimId' => $h->klaim_id,
@@ -62,130 +120,132 @@ class KlaimApiController extends Controller
                 ];
             });
 
-        $survey = DB::table('surveys')->where('klaim_id', $k->id)->first();
-        $hasReplacedDocs = $docs->contains('isReplaced', true);
+            $survey = $allSurveys->get($k->id);
+            $hasReplacedDocs = $docs->contains('isReplaced', true);
 
-        $ba = DB::table('berita_acaras')->where('klaim_id', $k->id)->orderByDesc('id')->first();
-        $sk = DB::table('surat_keputusans')->where('klaim_id', $k->id)->orderByDesc('id')->first();
+            $baGroup = $allBa->get($k->id);
+            $ba = $baGroup ? $baGroup->first() : null;
+            $skGroup = $allSk->get($k->id);
+            $sk = $skGroup ? $skGroup->first() : null;
 
-        // Dokumen aktif untuk sesi E-sign & tampilan dokumen adalah yang paling baru diterbitkan.
-        // Normalnya SK menyusul BA (SK lebih baru -> aktif). Tapi kalau klaim pernah di-Banding,
-        // Berita Acara BARU akan diterbitkan lagi setelah SK lama ada - dalam kondisi ini BA yang
-        // lebih baru itu yang harus jadi aktif kembali (SK lama dianggap sudah tidak berlaku).
-        $skIsActive = $sk && (!$ba || $sk->created_at >= $ba->created_at);
-        $esignDocType = $skIsActive ? 'surat_keputusan' : 'berita_acara';
-        $esignDocId = $skIsActive ? $sk->id : ($ba->id ?? null);
+            // Dokumen aktif untuk sesi E-sign & tampilan dokumen adalah yang paling baru diterbitkan.
+            // Normalnya SK menyusul BA (SK lebih baru -> aktif). Tapi kalau klaim pernah di-Banding,
+            // Berita Acara BARU akan diterbitkan lagi setelah SK lama ada - dalam kondisi ini BA yang
+            // lebih baru itu yang harus jadi aktif kembali (SK lama dianggap sudah tidak berlaku).
+            $skIsActive = $sk && (!$ba || $sk->created_at >= $ba->created_at);
+            $esignDocType = $skIsActive ? 'surat_keputusan' : 'berita_acara';
+            $esignDocId = $skIsActive ? $sk->id : ($ba->id ?? null);
 
-        $esignSignatures = [];
-        if ($esignDocId) {
-            $esignSignatures = DB::table('esign_signatures')
-                ->where('dokumen_type', $esignDocType)
-                ->where('dokumen_id', $esignDocId)
-                ->orderBy('pejabat_komite_id')
-                ->get()
-                ->map(function ($s) {
-                    $pj = DB::table('pejabat_komites')->where('id', $s->pejabat_komite_id)->first();
-                    return [
-                        'id' => $s->id,
-                        'dokumenType' => $s->dokumen_type,
-                        'dokumenId' => $s->dokumen_id,
-                        'pejabatKomiteId' => $s->pejabat_komite_id,
-                        'status' => $s->status,
-                        'signedAt' => $s->signed_at,
-                        'pejabatKomite' => $pj ? [
-                            'id' => $pj->id,
-                            'nip' => $pj->nip,
-                            'nama' => $pj->nama,
-                            'jabatan' => $pj->jabatan,
-                            'urutan' => $pj->urutan,
-                        ] : null,
-                    ];
-                })->values();
-        }
+            $esignSignatures = [];
+            if ($esignDocId) {
+                $esignSignatures = $esignByDoc->get($esignDocType . ':' . $esignDocId, collect())
+                    ->map(function ($s) use ($pejabats) {
+                        $pj = $pejabats->get($s->pejabat_komite_id);
+                        return [
+                            'id' => $s->id,
+                            'dokumenType' => $s->dokumen_type,
+                            'dokumenId' => $s->dokumen_id,
+                            'pejabatKomiteId' => $s->pejabat_komite_id,
+                            'status' => $s->status,
+                            'signedAt' => $s->signed_at,
+                            'pejabatKomite' => $pj ? [
+                                'id' => $pj->id,
+                                'nip' => $pj->nip,
+                                'nama' => $pj->nama,
+                                'jabatan' => $pj->jabatan,
+                                'urutan' => $pj->urutan,
+                            ] : null,
+                        ];
+                    })->values();
+            }
 
-        return [
-            'id' => $k->id,
-            'kodeKlaim' => $k->kode_klaim,
-            'sertifikatPenjaminanId' => $k->sertifikat_penjaminan_id,
-            'mitraId' => $k->mitra_id,
-            'penyebabKlaimId' => $k->penyebab_klaim_id,
-            'statusId' => $k->status_id,
-            'bakiDebetKlaim' => $k->baki_debet_klaim,
-            'coverPercentageSnapshot' => $k->cover_percentage_snapshot,
-            'nilaiKlaim' => $k->nilai_klaim,
-            'tanggalPengajuan' => $k->tanggal_pengajuan,
-            'tanggalMacet' => $k->tanggal_macet,
-            'catatanPerbaikan' => $k->catatan_perbaikan,
-            'isResubmitted' => (bool) ($k->is_resubmitted ?? false),
-            'disetujuiConfirmedByMitra' => (bool) ($k->disetujui_confirmed_by_mitra ?? false),
-            'hasReplacedDocs' => $hasReplacedDocs,
-            'draftOnly' => (bool)$k->draft_only,
-            'active' => (bool)$k->active,
-            'createdAt' => $k->created_at,
-            'updatedAt' => $k->updated_at,
-            'sertifikatPenjaminan' => $sp ? [
-                'id' => $sp->id,
-                'nomorSp' => $sp->nomor_sp,
-                'namaDebitur' => $sp->nama_debitur,
-                'tanggalAkad' => $sp->tanggal_akad,
-                'plafonKredit' => $sp->plafon_kredit,
-                'bakiDebet' => $sp->baki_debet,
-                'produkId' => $sp->produk_id,
-                'mitraId' => $sp->mitra_id,
-            ] : null,
-            'mitra' => $mitra ? [
-                'id' => $mitra->id,
-                'kodeMitra' => $mitra->kode_mitra,
-                'namaMitra' => $mitra->nama_mitra,
-                'jenisMitra' => $mitra->jenis_mitra,
-                'bankPenerima' => $mitra->bank_penerima ?? null,
-                'noRekeningPenerima' => $mitra->no_rekening_penerima ?? null,
-            ] : null,
-            'penyebabKlaim' => $penyebab ? [
-                'id' => $penyebab->id,
-                'kode' => $penyebab->kode,
-                'namaPenyebab' => $penyebab->nama_penyebab,
-            ] : null,
-            'status' => $status ? [
-                'id' => $status->id,
-                'kode' => $status->kode,
-                'nama' => $status->nama,
-                'urutan' => $status->urutan,
-            ] : null,
-            'documents' => $docs,
-            'statusHistory' => $history,
-            'survey' => $survey ? [
-                'id' => $survey->id,
-                'nomorPermohonan' => $survey->nomor_permohonan,
-                'tanggalSurvey' => $survey->tanggal_survey,
-                'catatan' => $survey->catatan,
-                'dokumenLaporanPath' => $survey->dokumen_laporan_path,
-                'approvedByMitra' => (bool)$survey->approved_by_mitra,
-                'denganMitra' => (bool)($survey->dengan_mitra ?? true),
-                'konfirmasiMitra' => (bool)($survey->konfirmasi_mitra ?? false)
-            ] : null,
-            'beritaAcara' => $ba ? [
-                'id' => $ba->id,
-                'klaimId' => $ba->klaim_id,
-                'nomorBa' => $ba->nomor_ba,
-                'tanggalBa' => $ba->tanggal_ba,
-                'kesimpulan' => $ba->kesimpulan,
-                'usulanNilaiKlaim' => $ba->usulan_nilai_klaim,
-                'status' => $ba->status,
-            ] : null,
-            'suratKeputusan' => ($sk && $skIsActive) ? [
-                'id' => $sk->id,
-                'klaimId' => $sk->klaim_id,
-                'nomorSk' => $sk->nomor_sk,
-                'tanggalSk' => $sk->tanggal_sk,
-                'nilaiDisetujui' => $sk->nilai_disetujui,
-                'status' => $sk->status,
-            ] : null,
-            'esignSignatures' => $esignSignatures,
-            'memoPembayaran' => (function () use ($k) {
-                $memo = DB::table('memo_pembayarans')->where('klaim_id', $k->id)->orderByDesc('id')->first();
-                if (!$memo) return null;
-                return [
+            $memoRow = $allMemos->get($k->id);
+            $memo = $memoRow ? $memoRow->first() : null;
+            $bayarRow = $allBayars->get($k->id);
+            $bayar = $bayarRow ? $bayarRow->first() : null;
+            $bandingRow = $allBandings->get($k->id);
+            $banding = $bandingRow ? $bandingRow->first() : null;
+
+            return [
+                'id' => $k->id,
+                'kodeKlaim' => $k->kode_klaim,
+                'sertifikatPenjaminanId' => $k->sertifikat_penjaminan_id,
+                'mitraId' => $k->mitra_id,
+                'penyebabKlaimId' => $k->penyebab_klaim_id,
+                'statusId' => $k->status_id,
+                'bakiDebetKlaim' => $k->baki_debet_klaim,
+                'coverPercentageSnapshot' => $k->cover_percentage_snapshot,
+                'nilaiKlaim' => $k->nilai_klaim,
+                'tanggalPengajuan' => $k->tanggal_pengajuan,
+                'tanggalMacet' => $k->tanggal_macet,
+                'catatanPerbaikan' => $k->catatan_perbaikan,
+                'isResubmitted' => (bool) ($k->is_resubmitted ?? false),
+                'disetujuiConfirmedByMitra' => (bool) ($k->disetujui_confirmed_by_mitra ?? false),
+                'hasReplacedDocs' => $hasReplacedDocs,
+                'draftOnly' => (bool)$k->draft_only,
+                'active' => (bool)$k->active,
+                'createdAt' => $k->created_at,
+                'updatedAt' => $k->updated_at,
+                'sertifikatPenjaminan' => $sp ? [
+                    'id' => $sp->id,
+                    'nomorSp' => $sp->nomor_sp,
+                    'namaDebitur' => $sp->nama_debitur,
+                    'tanggalAkad' => $sp->tanggal_akad,
+                    'plafonKredit' => $sp->plafon_kredit,
+                    'bakiDebet' => $sp->baki_debet,
+                    'produkId' => $sp->produk_id,
+                    'mitraId' => $sp->mitra_id,
+                ] : null,
+                'mitra' => $mitra ? [
+                    'id' => $mitra->id,
+                    'kodeMitra' => $mitra->kode_mitra,
+                    'namaMitra' => $mitra->nama_mitra,
+                    'jenisMitra' => $mitra->jenis_mitra,
+                    'bankPenerima' => $mitra->bank_penerima ?? null,
+                    'noRekeningPenerima' => $mitra->no_rekening_penerima ?? null,
+                ] : null,
+                'penyebabKlaim' => $penyebab ? [
+                    'id' => $penyebab->id,
+                    'kode' => $penyebab->kode,
+                    'namaPenyebab' => $penyebab->nama_penyebab,
+                ] : null,
+                'status' => $status ? [
+                    'id' => $status->id,
+                    'kode' => $status->kode,
+                    'nama' => $status->nama,
+                    'urutan' => $status->urutan,
+                ] : null,
+                'documents' => $docs,
+                'statusHistory' => $history,
+                'survey' => $survey ? [
+                    'id' => $survey->id,
+                    'nomorPermohonan' => $survey->nomor_permohonan,
+                    'tanggalSurvey' => $survey->tanggal_survey,
+                    'catatan' => $survey->catatan,
+                    'dokumenLaporanPath' => $survey->dokumen_laporan_path,
+                    'approvedByMitra' => (bool)$survey->approved_by_mitra,
+                    'denganMitra' => (bool)($survey->dengan_mitra ?? true),
+                    'konfirmasiMitra' => (bool)($survey->konfirmasi_mitra ?? false)
+                ] : null,
+                'beritaAcara' => $ba ? [
+                    'id' => $ba->id,
+                    'klaimId' => $ba->klaim_id,
+                    'nomorBa' => $ba->nomor_ba,
+                    'tanggalBa' => $ba->tanggal_ba,
+                    'kesimpulan' => $ba->kesimpulan,
+                    'usulanNilaiKlaim' => $ba->usulan_nilai_klaim,
+                    'status' => $ba->status,
+                ] : null,
+                'suratKeputusan' => ($sk && $skIsActive) ? [
+                    'id' => $sk->id,
+                    'klaimId' => $sk->klaim_id,
+                    'nomorSk' => $sk->nomor_sk,
+                    'tanggalSk' => $sk->tanggal_sk,
+                    'nilaiDisetujui' => $sk->nilai_disetujui,
+                    'status' => $sk->status,
+                ] : null,
+                'esignSignatures' => $esignSignatures,
+                'memoPembayaran' => $memo ? [
                     'id' => $memo->id,
                     'klaimId' => $memo->klaim_id,
                     'nomorMemo' => $memo->nomor_memo,
@@ -198,12 +258,8 @@ class KlaimApiController extends Controller
                     'disetujuiOleh' => $memo->disetujui_oleh ?? null,
                     'tanggalTtd' => $memo->tanggal_ttd ?? null,
                     'createdAt' => $memo->created_at,
-                ];
-            })(),
-            'pembayaran' => (function () use ($k) {
-                $bayar = DB::table('pembayarans')->where('klaim_id', $k->id)->orderByDesc('id')->first();
-                if (!$bayar) return null;
-                return [
+                ] : null,
+                'pembayaran' => $bayar ? [
                     'id' => $bayar->id,
                     'klaimId' => $bayar->klaim_id,
                     'nomorVoucher' => $bayar->nomor_voucher,
@@ -216,20 +272,16 @@ class KlaimApiController extends Controller
                     'disetujuiOleh' => $bayar->disetujui_oleh,
                     'status' => $bayar->status,
                     'createdAt' => $bayar->created_at,
-                ];
-            })(),
-            'banding' => (function () use ($k) {
-                $b = DB::table('bandings')->where('klaim_id', $k->id)->orderByDesc('id')->first();
-                if (!$b) return null;
-                return [
-                    'id' => $b->id,
-                    'klaimId' => $b->klaim_id,
-                    'tanggalPengajuan' => $b->tanggal_pengajuan,
-                    'alasan' => $b->alasan,
-                    'status' => $b->status,
-                ];
-            })(),
-        ];
+                ] : null,
+                'banding' => $banding ? [
+                    'id' => $banding->id,
+                    'klaimId' => $banding->klaim_id,
+                    'tanggalPengajuan' => $banding->tanggal_pengajuan,
+                    'alasan' => $banding->alasan,
+                    'status' => $banding->status,
+                ] : null,
+            ];
+        })->values();
     }
 
     public function index(Request $request)
@@ -273,12 +325,14 @@ class KlaimApiController extends Controller
             }
         }
 
-        $all = $query->orderBy('id', 'desc')->get();
-        $enriched = $all->map(fn($k) => $this->enrichKlaim($k));
-
-        $total = $enriched->count();
+        // Hitung total dulu (query ringan, cuma COUNT), baru ambil satu halaman saja dari DB
+        // sebelum di-enrich - sebelumnya SELURUH hasil filter di-enrich (N+1 penuh) baru
+        // dipotong ke halaman yang diminta setelahnya, jadi kerja jauh lebih banyak dari yang
+        // sebenarnya dikirim ke frontend.
+        $total = (clone $query)->count();
         $offset = ($page - 1) * $perPage;
-        $paginated = $enriched->slice($offset, $perPage)->values();
+        $page1 = $query->orderBy('id', 'desc')->offset($offset)->limit($perPage)->get();
+        $paginated = $this->enrichKlaims($page1);
 
         return response()->json([
             'data' => $paginated,

@@ -210,6 +210,16 @@ class MockDb {
           // browser - supaya perubahan hak akses (mis. penambahan modul pembayaran untuk role
           // tertentu) tetap ter-apply tanpa perlu clear localStorage manual.
           let patched = false;
+          if (parsed.settings && parsed.settings.appName === "Aplikasi Klaim Online PT Jamkrida Jabar") {
+            // Rename brand aplikasi - hanya timpa kalau masih nilai default lama (bukan hasil
+            // edit manual admin di Utility > Setting Web).
+            parsed.settings.appName = "Aplikasi Penjaminan Online PT Jamkrida Jabar";
+            patched = true;
+          }
+          if (parsed.settings && parsed.settings.metaDescription === "Aplikasi Klaim Online PT Jamkrida Jabar") {
+            parsed.settings.metaDescription = "Aplikasi Penjaminan Online PT Jamkrida Jabar";
+            patched = true;
+          }
           if (Array.isArray(parsed.roles) && !parsed.roles.some((r: any) => r.kode === "kabag_klaim")) {
             parsed.roles.push({ id: 6, kode: "kabag_klaim", nama: "Kepala Bagian Klaim", isSuperAdmin: false, active: true });
             patched = true;
@@ -225,12 +235,54 @@ class MockDb {
             parsed.modules.push({ id: 8, kode: "pembayaran", nama: "Pembayaran Klaim", routeSlug: "pembayaran", icon: "wallet", parentId: null, active: true });
             patched = true;
           }
+          if (Array.isArray(parsed.modules)) {
+            // Kelompokkan Pengajuan/Verifikasi/Komite/Pembayaran ke bawah modul induk baru
+            // "Modul Klaim Online", dan tambahkan modul induk kosong "Modul Regaransi".
+            if (!parsed.modules.some((m: any) => m.kode === "klaim-online")) {
+              parsed.modules.push({ id: 11, kode: "klaim-online", nama: "Modul Klaim Online", routeSlug: "klaim-online", icon: "briefcase", parentId: null, active: true });
+              patched = true;
+            }
+            if (!parsed.modules.some((m: any) => m.kode === "regaransi")) {
+              parsed.modules.push({ id: 12, kode: "regaransi", nama: "Modul Regaransi", routeSlug: "regaransi", icon: "shield", parentId: null, active: true });
+              patched = true;
+            }
+            const klaimOnlineMod = parsed.modules.find((m: any) => m.kode === "klaim-online");
+            const klaimOnlineId = klaimOnlineMod ? klaimOnlineMod.id : 11;
+            ["pengajuan", "verifikasi", "komite", "pembayaran"].forEach((kode) => {
+              const mod = parsed.modules.find((m: any) => m.kode === kode);
+              if (mod && mod.parentId !== klaimOnlineId) {
+                mod.parentId = klaimOnlineId;
+                patched = true;
+              }
+            });
+
+            // Isi Modul Regaransi dengan 6 halaman mockup: Regaransi Jiwa & Kredit Macet
+            // (masing-masing Pengajuan/Persetujuan/Pembayaran), mengikuti pola modul induk di atas.
+            const regaransiMod = parsed.modules.find((m: any) => m.kode === "regaransi");
+            const regaransiId = regaransiMod ? regaransiMod.id : 12;
+            const REGARANSI_CHILDREN = [
+              { id: 13, kode: "regaransi-jiwa-pengajuan", nama: "Pengajuan Regaransi Jiwa", routeSlug: "regaransi-jiwa/pengajuan" },
+              { id: 14, kode: "regaransi-jiwa-persetujuan", nama: "Persetujuan Regaransi Jiwa", routeSlug: "regaransi-jiwa/persetujuan" },
+              { id: 15, kode: "regaransi-jiwa-pembayaran", nama: "Pembayaran Regaransi Jiwa", routeSlug: "regaransi-jiwa/pembayaran" },
+              { id: 16, kode: "kredit-macet-pengajuan", nama: "Pengajuan Kredit Macet", routeSlug: "kredit-macet/pengajuan" },
+              { id: 17, kode: "kredit-macet-persetujuan", nama: "Persetujuan Kredit Macet", routeSlug: "kredit-macet/persetujuan" },
+              { id: 18, kode: "kredit-macet-pembayaran", nama: "Pembayaran Kredit Macet", routeSlug: "kredit-macet/pembayaran" },
+            ];
+            REGARANSI_CHILDREN.forEach((child) => {
+              if (!parsed.modules.some((m: any) => m.kode === child.kode)) {
+                parsed.modules.push({ id: child.id, kode: child.kode, nama: child.nama, routeSlug: child.routeSlug, icon: "", parentId: regaransiId, active: true });
+                patched = true;
+              }
+            });
+          }
           if (Array.isArray(parsed.rolePermissions)) {
             // Daftar kanonik roleId+moduleId yang WAJIB ada (mengikuti default rolePermissions
             // di bawah). Kalau ada kombinasi yang belum ada di data lama, tambahkan.
             const CANONICAL_PERMISSIONS: Array<{ roleId: number; moduleId: number }> = [
               { roleId: 2, moduleId: 3 }, { roleId: 2, moduleId: 10 },
               { roleId: 3, moduleId: 1 }, { roleId: 3, moduleId: 3 }, { roleId: 3, moduleId: 4 }, { roleId: 3, moduleId: 8 }, { roleId: 3, moduleId: 10 },
+              { roleId: 3, moduleId: 13 }, { roleId: 3, moduleId: 14 }, { roleId: 3, moduleId: 15 },
+              { roleId: 3, moduleId: 16 }, { roleId: 3, moduleId: 17 }, { roleId: 3, moduleId: 18 },
               { roleId: 4, moduleId: 7 }, { roleId: 4, moduleId: 10 },
               { roleId: 5, moduleId: 8 }, { roleId: 5, moduleId: 10 },
               { roleId: 6, moduleId: 8 }, { roleId: 6, moduleId: 10 },
@@ -256,7 +308,7 @@ class MockDb {
 
     const data = {
       settings: {
-        appName: "Aplikasi Klaim Online PT Jamkrida Jabar",
+        appName: "Aplikasi Penjaminan Online PT Jamkrida Jabar",
         logoUrl: null,
         logoUrlPublic: null,
         faviconUrl: null,
@@ -266,7 +318,7 @@ class MockDb {
         footerText: "© 2026 PT Jamkrida Jabar (Perseroda). All rights reserved.",
         contactEmail: "info@jamkridajabar.co.id",
         contactPhone: "022-123456",
-        metaDescription: "Aplikasi Klaim Online PT Jamkrida Jabar",
+        metaDescription: "Aplikasi Penjaminan Online PT Jamkrida Jabar",
         metaKeywords: "jamkrida, klaim, online, jabar"
       },
       roles: [
@@ -295,7 +347,14 @@ class MockDb {
         { id: 11, roleId: 5, moduleId: 10, canView: true, canCreate: true, canEdit: true, canDelete: false }, // profile
         // Kabag Klaim permissions (id: 6)
         { id: 12, roleId: 6, moduleId: 8, canView: true, canCreate: true, canEdit: true, canDelete: false }, // pembayaran
-        { id: 13, roleId: 6, moduleId: 10, canView: true, canCreate: true, canEdit: true, canDelete: false } // profile
+        { id: 13, roleId: 6, moduleId: 10, canView: true, canCreate: true, canEdit: true, canDelete: false }, // profile
+        // Staf Klaim - Regaransi Jiwa & Kredit Macet (mockup module)
+        { id: 14, roleId: 3, moduleId: 13, canView: true, canCreate: true, canEdit: true, canDelete: false },
+        { id: 15, roleId: 3, moduleId: 14, canView: true, canCreate: true, canEdit: true, canDelete: false },
+        { id: 16, roleId: 3, moduleId: 15, canView: true, canCreate: true, canEdit: true, canDelete: false },
+        { id: 17, roleId: 3, moduleId: 16, canView: true, canCreate: true, canEdit: true, canDelete: false },
+        { id: 18, roleId: 3, moduleId: 17, canView: true, canCreate: true, canEdit: true, canDelete: false },
+        { id: 19, roleId: 3, moduleId: 18, canView: true, canCreate: true, canEdit: true, canDelete: false }
       ],
       modules: [
         { id: 1, kode: "referensi", nama: "Data Referensi", routeSlug: "referensi", icon: "briefcase", parentId: null, active: true },
@@ -303,10 +362,18 @@ class MockDb {
         { id: 21, parentId: 2, kode: "utility-setting-web", nama: "Setting Web", routeSlug: "utility/setting-web", icon: "", active: true },
         { id: 22, parentId: 2, kode: "utility-role-module", nama: "Role & Izin", routeSlug: "utility/role-module", icon: "", active: true },
         { id: 23, parentId: 2, kode: "utility-log-access", nama: "Audit Log", routeSlug: "utility/log-access", icon: "", active: true },
-        { id: 3, kode: "pengajuan", nama: "Pengajuan Klaim", routeSlug: "pengajuan", icon: "file-sheet", parentId: null, active: true },
-        { id: 4, kode: "verifikasi", nama: "Analisa & Verifikasi", routeSlug: "verifikasi", icon: "check-square", parentId: null, active: true },
-        { id: 7, kode: "komite", nama: "Sidang Komite", routeSlug: "komite", icon: "fingerprint", parentId: null, active: true },
-        { id: 8, kode: "pembayaran", nama: "Pembayaran Klaim", routeSlug: "pembayaran", icon: "wallet", parentId: null, active: true },
+        { id: 11, kode: "klaim-online", nama: "Modul Klaim Online", routeSlug: "klaim-online", icon: "briefcase", parentId: null, active: true },
+        { id: 12, kode: "regaransi", nama: "Modul Regaransi", routeSlug: "regaransi", icon: "shield", parentId: null, active: true },
+        { id: 3, kode: "pengajuan", nama: "Pengajuan Klaim", routeSlug: "pengajuan", icon: "file-sheet", parentId: 11, active: true },
+        { id: 4, kode: "verifikasi", nama: "Analisa & Verifikasi", routeSlug: "verifikasi", icon: "check-square", parentId: 11, active: true },
+        { id: 7, kode: "komite", nama: "Sidang Komite", routeSlug: "komite", icon: "fingerprint", parentId: 11, active: true },
+        { id: 8, kode: "pembayaran", nama: "Pembayaran Klaim", routeSlug: "pembayaran", icon: "wallet", parentId: 11, active: true },
+        { id: 13, kode: "regaransi-jiwa-pengajuan", nama: "Pengajuan Regaransi Jiwa", routeSlug: "regaransi-jiwa/pengajuan", icon: "", parentId: 12, active: true },
+        { id: 14, kode: "regaransi-jiwa-persetujuan", nama: "Persetujuan Regaransi Jiwa", routeSlug: "regaransi-jiwa/persetujuan", icon: "", parentId: 12, active: true },
+        { id: 15, kode: "regaransi-jiwa-pembayaran", nama: "Pembayaran Regaransi Jiwa", routeSlug: "regaransi-jiwa/pembayaran", icon: "", parentId: 12, active: true },
+        { id: 16, kode: "kredit-macet-pengajuan", nama: "Pengajuan Kredit Macet", routeSlug: "kredit-macet/pengajuan", icon: "", parentId: 12, active: true },
+        { id: 17, kode: "kredit-macet-persetujuan", nama: "Persetujuan Kredit Macet", routeSlug: "kredit-macet/persetujuan", icon: "", parentId: 12, active: true },
+        { id: 18, kode: "kredit-macet-pembayaran", nama: "Pembayaran Kredit Macet", routeSlug: "kredit-macet/pembayaran", icon: "", parentId: 12, active: true },
         { id: 10, kode: "profile", nama: "Profil Saya", routeSlug: "profile", icon: "user", parentId: null, active: true }
       ],
       users: [

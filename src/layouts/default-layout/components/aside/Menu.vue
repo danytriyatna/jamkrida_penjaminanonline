@@ -56,7 +56,7 @@
           </template>
           <div
             v-if="menuItem.sectionTitle && menuItem.route"
-            :class="{ show: hasActiveChildren(menuItem.route) }"
+            :class="{ show: hasActiveChildren(menuItem.route, menuItem.sub) }"
             class="menu-item menu-accordion"
             data-kt-menu-sub="accordion"
             data-kt-menu-trigger="click"
@@ -84,7 +84,7 @@
             </span>
             <div
               v-if="menuItem.route"
-              :class="{ show: hasActiveChildren(menuItem.route) }"
+              :class="{ show: hasActiveChildren(menuItem.route, menuItem.sub) }"
               class="menu-sub menu-sub-accordion"
             >
               <template v-for="(item2, k) in menuItem.sub" :key="k">
@@ -175,8 +175,10 @@ export default defineComponent({
     const dbMenuConfig = ref<any[]>([]);
     const dbMenuConfigUtama = ref<any[]>([]);
 
-    // Modules that belong in "Modul Utama" (core claim workflow), everything else stays in "Modul Sistem"
-    const MODUL_UTAMA_KODES = ["pengajuan", "verifikasi", "komite", "pembayaran"];
+    // Modules that belong in "Modul Utama": modul-modul induk (Klaim Online, Regaransi).
+    // Anak-anak modul Klaim Online (pengajuan/verifikasi/komite/pembayaran) ikut bersarang
+    // di dalamnya lewat parentId, jadi tidak perlu didaftarkan lagi di sini.
+    const MODUL_UTAMA_KODES = ["klaim-online", "regaransi"];
 
     const fetchDbMenu = async () => {
       if (!authStore.isAuthenticated) {
@@ -304,8 +306,10 @@ export default defineComponent({
       }
     };
 
-    const hasActiveChildren = (match: string) => {
-      return route.path.indexOf(match) !== -1;
+    const hasActiveChildren = (match: string, sub?: Array<{ route?: string }>) => {
+      if (route.path.indexOf(match) !== -1) return true;
+      if (sub && sub.some((s) => s.route && route.path.indexOf(s.route) !== -1)) return true;
+      return false;
     };
 
     return {

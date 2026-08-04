@@ -9,7 +9,7 @@
           class="h-35px h-lg-40px me-3"
         />
         <div class="d-flex flex-column justify-content-center lh-1 ms-1">
-          <span class="fs-6 fw-bold text-white tracking-wide">Klaim Online</span>
+          <span class="fs-6 fw-bold text-white tracking-wide">Penjaminan Online</span>
           <span class="fs-8 fw-semibold text-warning mt-1">Jamkrida Jabar</span>
         </div>
       </router-link>

@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\KlaimApiController;
 use App\Http\Controllers\Api\UtilityApiController;
 use App\Http\Controllers\Api\AuthApiController;
+use App\Http\Controllers\Api\RegaransiApiController;
 
 Route::post('/login', [AuthApiController::class, 'login']);
 Route::post('/logout', [AuthApiController::class, 'logout']);
@@ -57,3 +58,15 @@ Route::delete('/utility/users/{id}', [UtilityApiController::class, 'usersToggleA
 
 // Referensi: Mitras
 Route::get('/referensi/mitras', [UtilityApiController::class, 'mitras']);
+
+// Regaransi: Asuransi Jiwa
+Route::get('/regaransi-jiwa', [RegaransiApiController::class, 'jiwaIndex']);
+Route::post('/regaransi-jiwa/ajukan', [RegaransiApiController::class, 'jiwaAjukan']);
+Route::post('/regaransi-jiwa/setujui', [RegaransiApiController::class, 'jiwaSetujui']);
+Route::post('/regaransi-jiwa/bayar', [RegaransiApiController::class, 'jiwaBayar']);
+
+// Regaransi: Kredit Macet
+Route::get('/regaransi-kredit', [RegaransiApiController::class, 'kreditIndex']);
+Route::post('/regaransi-kredit/ajukan', [RegaransiApiController::class, 'kreditAjukan']);
+Route::post('/regaransi-kredit/setujui', [RegaransiApiController::class, 'kreditSetujui']);
+Route::post('/regaransi-kredit/cairkan', [RegaransiApiController::class, 'kreditCairkan']);

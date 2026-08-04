@@ -45,12 +45,12 @@
       <!--begin::Heading-->
       <div class="text-center mb-10">
         <!--begin::Title-->
-        <h1 class="text-gray-900 mb-3 fs-2x fw-bold">Masuk Klaim Online</h1>
+        <h1 class="text-gray-900 mb-3 fs-2x fw-bold">Masuk Penjaminan Online</h1>
         <!--end::Title-->
 
         <!--begin::Link-->
         <div class="text-gray-500 fw-semibold fs-5">
-          Aplikasi Klaim Online PT Jamkrida Jabar v2.0
+          Aplikasi Penjaminan Online PT Jamkrida Jabar v2.0
         </div>
         <!--end::Link-->
       </div>
@@ -276,7 +276,7 @@ export default defineComponent({
         const isMitraUser = loggedUser?.role?.kode === "mitra" || loggedUser?.roleId === 2 || loggedUser?.email === "mitra@bjb.co.id";
 
         Swal.fire({
-          text: "Login berhasil! Selamat datang di Aplikasi Klaim Online PT Jamkrida Jabar.",
+          text: "Login berhasil! Selamat datang di Aplikasi Penjaminan Online PT Jamkrida Jabar.",
           icon: "success",
           buttonsStyling: false,
           confirmButtonText: isMitraUser ? "Masuk ke Pengajuan Online" : "Masuk ke Dashboard",

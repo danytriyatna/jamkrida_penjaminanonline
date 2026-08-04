@@ -115,6 +115,64 @@ const routes: Array<RouteRecordRaw> = [
           breadcrumbs: ["Klaim", "Pembayaran"],
         },
       },
+      {
+        path: "/regaransi",
+        redirect: "/regaransi-jiwa/pengajuan",
+      },
+      {
+        path: "/regaransi-jiwa/pengajuan",
+        name: "regaransi-jiwa-pengajuan",
+        component: () => import("@/views/apps/regaransi/jiwa/PengajuanJiwa.vue"),
+        meta: {
+          pageTitle: "Pengajuan Regaransi Jiwa",
+          breadcrumbs: ["Regaransi", "Asuransi Jiwa", "Pengajuan"],
+        },
+      },
+      {
+        path: "/regaransi-jiwa/persetujuan",
+        name: "regaransi-jiwa-persetujuan",
+        component: () => import("@/views/apps/regaransi/jiwa/PersetujuanJiwa.vue"),
+        meta: {
+          pageTitle: "Persetujuan Regaransi Jiwa",
+          breadcrumbs: ["Regaransi", "Asuransi Jiwa", "Persetujuan"],
+        },
+      },
+      {
+        path: "/regaransi-jiwa/pembayaran",
+        name: "regaransi-jiwa-pembayaran",
+        component: () => import("@/views/apps/regaransi/jiwa/PembayaranJiwa.vue"),
+        meta: {
+          pageTitle: "Pembayaran Regaransi Jiwa",
+          breadcrumbs: ["Regaransi", "Asuransi Jiwa", "Pembayaran"],
+        },
+      },
+      {
+        path: "/kredit-macet/pengajuan",
+        name: "kredit-macet-pengajuan",
+        component: () => import("@/views/apps/regaransi/kredit/PengajuanKredit.vue"),
+        meta: {
+          pageTitle: "Pengajuan Kredit Macet",
+          breadcrumbs: ["Regaransi", "Kredit Macet", "Pengajuan"],
+        },
+      },
+      {
+        path: "/kredit-macet/persetujuan",
+        name: "kredit-macet-persetujuan",
+        component: () => import("@/views/apps/regaransi/kredit/PersetujuanKredit.vue"),
+        meta: {
+          pageTitle: "Persetujuan Kredit Macet",
+          breadcrumbs: ["Regaransi", "Kredit Macet", "Persetujuan"],
+        },
+      },
+      {
+        path: "/kredit-macet/pembayaran",
+        name: "kredit-macet-pembayaran",
+        component: () => import("@/views/apps/regaransi/kredit/PembayaranKredit.vue"),
+        meta: {
+          pageTitle: "Pembayaran Kredit Macet",
+          breadcrumbs: ["Regaransi", "Kredit Macet", "Pembayaran"],
+        },
+      },
     ],
   },
   {
@@ -193,7 +251,7 @@ router.beforeEach(async (to, from, next) => {
   const configStore = useConfigStore();
   const settingsStore = useSettingsStore();
 
-  document.title = `${to.meta.pageTitle} - ${settingsStore.appName || 'Klaim Online'}`;
+  document.title = `${to.meta.pageTitle} - ${settingsStore.appName || 'Penjaminan Online'}`;
 
   configStore.resetLayoutConfig();
 
@@ -234,6 +292,13 @@ router.beforeEach(async (to, from, next) => {
         "verifikasi",
         "komite",
         "pembayaran",
+        "regaransi",
+        "regaransi-jiwa-pengajuan",
+        "regaransi-jiwa-persetujuan",
+        "regaransi-jiwa-pembayaran",
+        "kredit-macet-pengajuan",
+        "kredit-macet-persetujuan",
+        "kredit-macet-pembayaran",
         "profile"
       ];
 

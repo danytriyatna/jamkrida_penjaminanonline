@@ -12,7 +12,7 @@ function hexToRgb(hex: string): string | null {
 }
 
 export const useSettingsStore = defineStore("settings", () => {
-  const appName = ref("Aplikasi Klaim Online PT Jamkrida Jabar");
+  const appName = ref("Aplikasi Penjaminan Online PT Jamkrida Jabar");
   const logoUrl = ref<string | null>(null);
   const faviconUrl = ref<string | null>(null);
   const primaryColor = ref("#2c3691");
@@ -21,7 +21,7 @@ export const useSettingsStore = defineStore("settings", () => {
   const footerText = ref("© 2026 PT Jamkrida Jabar (Perseroda). All rights reserved.");
   const contactEmail = ref("info@jamkridajabar.co.id");
   const contactPhone = ref("022-123456");
-  const metaDescription = ref("Aplikasi Klaim Online PT Jamkrida Jabar");
+  const metaDescription = ref("Aplikasi Penjaminan Online PT Jamkrida Jabar");
   const metaKeywords = ref("jamkrida, klaim, online, jabar");
 
   const loading = ref(false);
