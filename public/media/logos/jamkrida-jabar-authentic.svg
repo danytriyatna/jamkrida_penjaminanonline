@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 135" fill="none">
+  <defs>
+    <clipPath id="jj-card-clip">
+      <rect width="100" height="135" rx="10" />
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#jj-card-clip)">
+    <!-- Left Background: Navy Blue -->
+    <rect x="0" y="0" width="50" height="135" fill="#20368F" />
+    <!-- Right Background: Emerald Green -->
+    <rect x="50" y="0" width="50" height="135" fill="#0DA24B" />
+
+    <!-- White Emblem -->
+    <!-- Head -->
+    <circle cx="50" cy="27" r="14" fill="#FFFFFF" />
+
+    <!-- Arms & Body ("JJ" Figure) -->
+    <!-- Arms -->
+    <path d="M 19 44 C 31 32, 42 42, 50 48 C 58 42, 69 32, 81 44 C 70 54, 58 54, 50 56 C 42 54, 30 54, 19 44 Z" fill="#FFFFFF" />
+
+    <!-- Left 'J' Leg -->
+    <path d="M 43 56 V 104 C 43 111, 38 114, 31 114 H 25 C 19 114, 17 109, 17 101 V 98 H 22 V 101 C 22 105, 24 107, 28 107 H 31 C 35 107, 37 104, 37 100 V 56 H 43 Z" fill="#FFFFFF" />
+
+    <!-- Right 'J' Leg -->
+    <path d="M 57 56 V 104 C 57 111, 62 114, 69 114 H 75 C 81 114, 83 109, 83 101 V 98 H 78 V 101 C 78 105, 76 107, 72 107 H 69 C 65 107, 63 104, 63 100 V 56 H 57 Z" fill="#FFFFFF" />
+  </g>
+
+  <!-- Border -->
+  <rect x="0.5" y="0.5" width="99" height="134" rx="9.5" stroke="rgba(255,255,255,0.3)" stroke-width="1" />
+</svg>

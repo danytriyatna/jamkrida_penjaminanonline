@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" fill="none">
+  <defs>
+    <linearGradient id="jj-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0066CC" />
+      <stop offset="100%" stop-color="#003399" />
+    </linearGradient>
+    <linearGradient id="accent-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E5A93C" />
+      <stop offset="100%" stop-color="#FFD700" />
+    </linearGradient>
+  </defs>
+
+  <!-- Shield Icon -->
+  <g transform="translate(5, 5)">
+    <rect width="40" height="40" rx="10" fill="url(#jj-grad)" />
+    <!-- Shield shape -->
+    <path d="M20 8 L32 14 V22 C32 28.5 26.8 33.8 20 35 C13.2 33.8 8 28.5 8 22 V14 L20 8 Z" fill="white" fill-opacity="0.2" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+    <!-- Gold Check/Accent -->
+    <path d="M15 20 L18.5 23.5 L25 16.5" stroke="url(#accent-grad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- 2-Line Text -->
+  <text x="54" y="22" font-family="'Inter', 'Segoe UI', sans-serif" font-size="15" font-weight="800" fill="#FFFFFF" letter-spacing="0.5">Klaim Online</text>
+  <text x="54" y="38" font-family="'Inter', 'Segoe UI', sans-serif" font-size="12" font-weight="600" fill="#E5A93C" letter-spacing="0.3">Jamkrida Jabar</text>
+</svg>

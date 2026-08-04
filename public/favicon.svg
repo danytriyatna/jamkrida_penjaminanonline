@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 540" width="400" height="540">
+  <defs>
+    <clipPath id="jj-official-clip">
+      <rect width="400" height="540" rx="36" ry="36" />
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#jj-official-clip)">
+    <!-- Left Background: Navy Blue -->
+    <rect x="0" y="0" width="197" height="540" fill="#283897" />
+    <!-- Right Background: Emerald Green -->
+    <rect x="197" y="0" width="203" height="540" fill="#0F9747" />
+
+    <!-- White Emblem -->
+    <!-- Head Circle -->
+    <circle cx="197" cy="92" r="48" fill="#FFFFFF" />
+
+    <!-- Arms -->
+    <path d="M 56 124 C 105 162, 155 142, 197 142 C 239 142, 289 162, 338 124 C 290 190, 240 178, 197 178 C 154 178, 104 190, 56 124 Z" fill="#FFFFFF" />
+
+    <!-- Left 'J' Body & Leg -->
+    <path d="M 148 152 V 420 C 148 456, 126 474, 86 474 H 74 C 64 474, 61 462, 61 448 L 61 396 L 73 396 L 73 440 C 73 448, 80 452, 90 452 C 114 452, 124 442, 124 416 V 152 Z" fill="#FFFFFF" />
+
+    <!-- Right 'J' Body & Leg -->
+    <path d="M 246 152 V 420 C 246 456, 268 474, 308 474 H 320 C 330 474, 333 462, 333 448 L 333 396 L 321 396 L 321 440 C 321 448, 314 452, 304 452 C 280 452, 270 442, 270 416 V 152 Z" fill="#FFFFFF" />
+  </g>
+</svg>
