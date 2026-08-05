@@ -459,7 +459,14 @@ class MockDb {
 
   public static getData(): any {
     MockDb.init();
-    return JSON.parse(localStorage.getItem(MockDb.STORAGE_KEY)!);
+    const data = JSON.parse(localStorage.getItem(MockDb.STORAGE_KEY)!);
+    if (data && Array.isArray(data.klaimDocuments)) {
+      // Clean up any corrupted records with NaN or null/undefined jenisDokumenId from previous runs
+      data.klaimDocuments = data.klaimDocuments.filter((d: any) => {
+        return d && d.jenisDokumenId !== null && d.jenisDokumenId !== undefined && !isNaN(Number(d.jenisDokumenId));
+      });
+    }
+    return data;
   }
 
   public static saveData(data: any) {

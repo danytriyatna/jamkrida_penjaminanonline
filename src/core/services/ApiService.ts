@@ -837,12 +837,24 @@ class ApiService {
 
           // 2. Upload Document
           if (subAction === "upload-document") {
-            const docId = payload instanceof FormData ? payload.get("jenisDokumenId") : (payload?.jenisDokumenId || payload);
-            const fileName = payload instanceof FormData ? payload.get("fileName") : payload?.fileName;
-            const fileType = payload instanceof FormData ? payload.get("fileType") : payload?.fileType;
-            const fileUrl = payload instanceof FormData ? payload.get("fileUrl") : payload?.fileUrl;
+            console.log("=== MOCK UPLOAD DEBUG ===");
+            console.log("payload:", payload);
+            const isMultipart = payload && typeof payload.get === "function";
+            console.log("isMultipart:", isMultipart);
+            const rawDocId = isMultipart ? payload.get("jenisDokumenId") : (payload?.jenisDokumenId || payload);
+            console.log("rawDocId:", rawDocId);
+            const docId = rawDocId ? parseInt(String(rawDocId)) : null;
+            console.log("parsed docId:", docId);
+            console.log("klaimId:", klaimId);
+
+            const fileName = isMultipart ? payload.get("fileName") : payload?.fileName;
+            const fileType = isMultipart ? payload.get("fileType") : payload?.fileType;
+            const fileUrl = isMultipart ? payload.get("fileUrl") : payload?.fileUrl;
 
             let doc = db.klaimDocuments.find((d: any) => d.klaimId == klaimId && d.jenisDokumenId == docId);
+            console.log("found doc:", doc);
+            console.log("all docs for this claim in db:", db.klaimDocuments.filter((d: any) => d.klaimId == klaimId));
+
             const targetUrl = fileUrl || "/documents/uploaded_sample.pdf";
             const targetName = fileName || "uploaded_document.pdf";
 
