@@ -533,108 +533,98 @@
       </div>
     </div>
 
-    <!-- SURVEY SCHEDULER MODAL -->
-    <div v-if="showSurveyModal" class="modal fade show d-block" style="background: rgba(0,0,0,0.5); overflow-y:auto;">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title fw-bold">Jadwalkan Survei Lapangan</h5>
-            <button type="button" class="btn-close" @click="showSurveyModal = false"></button>
-          </div>
-          <form @submit.prevent="submitSurveySchedule">
-            <div class="modal-body">
-              <div class="fv-row mb-6">
-                <label class="required fs-6 fw-semibold mb-2">Tanggal Survei</label>
-                <input type="date" class="form-control form-control-solid" v-model="surveyForm.tanggalSurvey" required />
-              </div>
-              <div class="fv-row mb-6">
-                <label class="fs-6 fw-semibold mb-2">Catatan / Instruksi Tim Survei</label>
-                <textarea class="form-control form-control-solid" rows="3" v-model="surveyForm.catatan" placeholder="Masukkan lokasi detail wirausaha, rute, atau berkas tambahan yang harus disurvei..."></textarea>
-              </div>
-              <div class="fv-row mb-2">
-                <label class="fs-6 fw-semibold mb-2">Jenis Survei</label>
-                <div class="form-check form-check-custom form-check-solid mb-2">
-                  <input class="form-check-input" type="radio" v-model="surveyForm.denganMitra" :value="true" id="survey_dengan_mitra" />
-                  <label class="form-check-label fw-semibold text-gray-800" for="survey_dengan_mitra">
-                    Survei Bersama Mitra <span class="text-muted fw-normal">(perlu konfirmasi jadwal dari Mitra terlebih dahulu)</span>
-                  </label>
-                </div>
-                <div class="form-check form-check-custom form-check-solid">
-                  <input class="form-check-input" type="radio" v-model="surveyForm.denganMitra" :value="false" id="survey_internal" />
-                  <label class="form-check-label fw-semibold text-gray-800" for="survey_internal">
-                    Survei Internal <span class="text-muted fw-normal">(langsung dijadwalkan tanpa perlu konfirmasi Mitra)</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-light btn-sm" @click="showSurveyModal = false">Batal</button>
-              <button type="submit" class="btn btn-primary btn-sm">Jadwalkan & Kirim Tugas</button>
-            </div>
-          </form>
+    <!-- SURVEY SCHEDULER MODAL (Using Reusable UiModal) -->
+    <UiModal
+      v-model="showSurveyModal"
+      title="Jadwalkan Survei Lapangan"
+      icon="ki-solid ki-calendar-tick"
+      variant="primary"
+      :showDefaultFooter="false"
+    >
+      <form @submit.prevent="submitSurveySchedule">
+        <div class="fv-row mb-6 text-start">
+          <label class="required fs-6 fw-semibold mb-2">Tanggal Survei</label>
+          <input type="date" class="form-control form-control-solid" v-model="surveyForm.tanggalSurvey" required />
         </div>
-      </div>
-    </div>
+        <div class="fv-row mb-6 text-start">
+          <label class="fs-6 fw-semibold mb-2">Catatan / Instruksi Tim Survei</label>
+          <textarea class="form-control form-control-solid" rows="3" v-model="surveyForm.catatan" placeholder="Masukkan lokasi detail wirausaha, rute, atau berkas tambahan yang harus disurvei..."></textarea>
+        </div>
+        <div class="fv-row mb-2 text-start">
+          <label class="fs-6 fw-semibold mb-2">Jenis Survei</label>
+          <div class="form-check form-check-custom form-check-solid mb-2">
+            <input class="form-check-input" type="radio" v-model="surveyForm.denganMitra" :value="true" id="survey_dengan_mitra" />
+            <label class="form-check-label fw-semibold text-gray-800" for="survey_dengan_mitra">
+              Survei Bersama Mitra <span class="text-muted fw-normal">(perlu konfirmasi jadwal dari Mitra terlebih dahulu)</span>
+            </label>
+          </div>
+          <div class="form-check form-check-custom form-check-solid">
+            <input class="form-check-input" type="radio" v-model="surveyForm.denganMitra" :value="false" id="survey_internal" />
+            <label class="form-check-label fw-semibold text-gray-800" for="survey_internal">
+              Survei Internal <span class="text-muted fw-normal">(langsung dijadwalkan tanpa perlu konfirmasi Mitra)</span>
+            </label>
+          </div>
+        </div>
+        <div class="d-flex justify-content-end gap-2 mt-6">
+          <button type="button" class="btn btn-light btn-sm" @click="showSurveyModal = false">Batal</button>
+          <button type="submit" class="btn btn-primary btn-sm">Jadwalkan & Kirim Tugas</button>
+        </div>
+      </form>
+    </UiModal>
 
-    <!-- DOCUMENT PREVIEW MODAL FOR VERIFIKATOR (75VH HEIGHT) -->
-    <div v-if="showDocModal && activeDoc" class="modal fade show d-block" style="background: rgba(0, 0, 0, 0.65); z-index: 1055;" tabindex="-1">
-      <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content shadow-lg border-0">
-          <div class="modal-header py-3 bg-light">
-            <div class="d-flex align-items-center gap-3">
-              <i class="bi bi-file-earmark-pdf fs-2 text-primary"></i>
-              <div>
-                <h5 class="modal-title fw-bold text-gray-900 mb-0">{{ activeDoc.jenisDokumen?.nama || 'Pratinjau Berkas' }}</h5>
-                <span class="text-muted fs-8">Status Berkas: {{ activeDoc.kesesuaian === 'tidak_sesuai' ? 'Tidak Sesuai' : activeDoc.kesesuaian === 'sesuai' ? 'Sesuai' : 'Tersedia' }}</span>
-              </div>
-            </div>
-            <button type="button" class="btn-close" @click="showDocModal = false"></button>
+    <!-- DOCUMENT PREVIEW MODAL FOR VERIFIKATOR (Using Reusable UiModal) -->
+    <UiModal
+      v-model="showDocModal"
+      :title="activeDoc?.jenisDokumen?.nama || 'Pratinjau Berkas'"
+      :subtitle="activeDoc ? `Status Berkas: ${activeDoc.kesesuaian === 'tidak_sesuai' ? 'Tidak Sesuai' : activeDoc.kesesuaian === 'sesuai' ? 'Sesuai' : 'Tersedia'}` : ''"
+      icon="ki-solid ki-document"
+      variant="primary"
+      size="xl"
+      :showDefaultFooter="false"
+    >
+      <div v-if="activeDoc" class="d-flex flex-column h-100">
+        <div class="flex-grow-1" style="height: 75vh; min-height: 550px;">
+          <img 
+            v-if="activeDoc.fileType?.startsWith('image/') || activeDoc.fileName?.match(/\.(jpg|jpeg|png|gif|webp)$/i)" 
+            :src="activeDoc.filePath" 
+            class="w-100 h-100 rounded shadow-sm" 
+            style="object-fit: contain; background: #1e1e2d;"
+          />
+          <iframe 
+            v-else 
+            :src="activeDoc.filePath || '/documents/uploaded_sample.pdf'" 
+            class="w-100 h-100 rounded border-0 shadow-sm"
+            style="background: #fff;"
+          ></iframe>
+        </div>
+        <div class="d-flex align-items-center justify-content-between mt-6">
+          <div class="d-flex align-items-center gap-2">
+            <span class="fs-8 fw-semibold text-gray-700">Tandai Hasil Pemeriksaan:</span>
+            <button 
+              type="button" 
+              :class="['btn btn-xs px-3', activeDoc.kesesuaian === 'sesuai' ? 'btn-success' : 'btn-outline btn-outline-success']"
+              @click="markDocStatus(activeDoc, 'sesuai')"
+            >
+              ✓ Sesuai
+            </button>
+            <button 
+              type="button" 
+              :class="['btn btn-xs px-3', activeDoc.kesesuaian === 'tidak_sesuai' ? 'btn-danger' : 'btn-outline btn-outline-danger']"
+              @click="markDocStatus(activeDoc, 'tidak_sesuai')"
+            >
+              ✗ Tidak Sesuai
+            </button>
           </div>
 
-          <div class="modal-body p-2" style="height: 75vh; min-height: 550px;">
-            <img 
-              v-if="activeDoc.fileType?.startsWith('image/') || activeDoc.fileName?.match(/\.(jpg|jpeg|png|gif|webp)$/i)" 
-              :src="activeDoc.filePath" 
-              class="w-100 h-100 rounded" 
-              style="object-fit: contain; background: #1e1e2d;"
-            />
-            <iframe 
-              v-else 
-              :src="activeDoc.filePath || '/documents/uploaded_sample.pdf'" 
-              class="w-100 h-100 rounded border-0"
-              style="background: #fff;"
-            ></iframe>
-          </div>
-
-          <div class="modal-footer py-2 bg-light justify-content-between">
-            <div class="d-flex align-items-center gap-2">
-              <span class="fs-8 fw-semibold text-gray-700">Tandai Hasil Pemeriksaan:</span>
-              <button 
-                type="button" 
-                :class="['btn btn-xs px-3', activeDoc.kesesuaian === 'sesuai' ? 'btn-success' : 'btn-outline btn-outline-success']"
-                @click="markDocStatus(activeDoc, 'sesuai')"
-              >
-                ✓ Sesuai
-              </button>
-              <button 
-                type="button" 
-                :class="['btn btn-xs px-3', activeDoc.kesesuaian === 'tidak_sesuai' ? 'btn-danger' : 'btn-outline btn-outline-danger']"
-                @click="markDocStatus(activeDoc, 'tidak_sesuai')"
-              >
-                ✗ Tidak Sesuai
-              </button>
-            </div>
-
-            <div>
-              <a :href="activeDoc.filePath || '/documents/uploaded_sample.pdf'" target="_blank" class="btn btn-sm btn-primary me-2">
-                <i class="bi bi-download me-1"></i> Unduh Berkas
-              </a>
-              <button type="button" class="btn btn-sm btn-light" @click="showDocModal = false">Tutup</button>
-            </div>
+          <div>
+            <a :href="activeDoc.filePath || '/documents/uploaded_sample.pdf'" target="_blank" class="btn btn-sm btn-primary me-2">
+              <i class="bi bi-download me-1"></i> Unduh Berkas
+            </a>
+            <button type="button" class="btn btn-sm btn-light" @click="showDocModal = false">Tutup</button>
           </div>
         </div>
       </div>
-    </div>
+    </UiModal>
   </div>
 </template>
 
@@ -643,9 +633,13 @@ import { defineComponent, onMounted, ref, computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import ApiService from "@/core/services/ApiService";
 import Swal from "sweetalert2/dist/sweetalert2.js";
+import UiModal from "@/components/ui/UiModal.vue";
 
 export default defineComponent({
   name: "verifikasi-klaim",
+  components: {
+    UiModal
+  },
   setup() {
     const route = useRoute();
     const activeTab = ref<"baru" | "proses">("baru");

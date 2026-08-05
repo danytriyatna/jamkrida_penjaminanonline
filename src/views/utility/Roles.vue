@@ -275,229 +275,210 @@
       </div>
     </div>
 
-    <!-- USER FORM MODAL -->
-    <div
-      v-if="showUserModal"
-      class="modal fade show d-block"
-      tabindex="-1"
-      style="background: rgba(0, 0, 0, 0.5);"
+    <!-- USER FORM MODAL (Using Reusable UiModal) -->
+    <UiModal
+      v-model="showUserModal"
+      :title="isEditingUser ? 'Edit Data Pengguna' : 'Tambah Pengguna Baru'"
+      icon="ki-solid ki-user-tick"
+      variant="primary"
+      :showDefaultFooter="false"
     >
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header bg-light">
-            <h5 class="modal-title fw-bold">
-              {{ isEditingUser ? 'Edit Data Pengguna' : 'Tambah Pengguna Baru' }}
-            </h5>
-            <button type="button" class="btn-close" @click="closeUserModal"></button>
+      <form @submit.prevent="onSaveUser">
+        <div class="text-start">
+          <div v-if="userFormError" class="alert alert-danger p-4 mb-5">
+            {{ userFormError }}
           </div>
 
-          <form @submit.prevent="onSaveUser">
-            <div class="modal-body py-6 px-8">
-              <div v-if="userFormError" class="alert alert-danger p-4 mb-5">
-                {{ userFormError }}
-              </div>
-
-              <!-- Nama Lengkap -->
-              <div class="fv-row mb-5">
-                <label class="required fs-6 fw-semibold mb-2">Nama Lengkap</label>
-                <input
-                  type="text"
-                  class="form-control form-control-solid"
-                  v-model="userForm.name"
-                  placeholder="Masukkan nama pengguna"
-                  required
-                />
-              </div>
-
-              <!-- Email -->
-              <div class="fv-row mb-5">
-                <label class="required fs-6 fw-semibold mb-2">Alamat Email</label>
-                <input
-                  type="email"
-                  class="form-control form-control-solid"
-                  v-model="userForm.email"
-                  placeholder="contoh@bjb.co.id"
-                  required
-                />
-              </div>
-
-              <!-- Pilih Role -->
-              <div class="fv-row mb-5">
-                <label class="required fs-6 fw-semibold mb-2">Role (Peran)</label>
-                <select class="form-select form-select-solid" v-model="userForm.roleId" required>
-                  <option value="" disabled>-- Pilih Role --</option>
-                  <option v-for="r in roles" :key="r.id" :value="r.id">
-                    {{ r.nama }} ({{ r.kode }})
-                  </option>
-                </select>
-              </div>
-
-              <!-- Pilih Mitra (jika role = mitra / roleId = 2) -->
-              <div v-if="userForm.roleId == 2" class="fv-row mb-5">
-                <label class="required fs-6 fw-semibold mb-2">Instansi / Mitra Bank</label>
-                <select class="form-select form-select-solid" v-model="userForm.mitraId" required>
-                  <option value="" disabled>-- Pilih Bank / BPR --</option>
-                  <option v-for="m in mitras" :key="m.id" :value="m.id">
-                    {{ m.namaMitra }}
-                  </option>
-                </select>
-              </div>
-
-              <!-- Status -->
-              <div class="fv-row mb-5">
-                <label class="fs-6 fw-semibold mb-2">Status Akun</label>
-                <div class="form-check form-switch form-check-custom form-check-solid">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    v-model="userForm.active"
-                    id="userActiveSwitch"
-                  />
-                  <label class="form-check-label fw-bold text-gray-700 ms-3" for="userActiveSwitch">
-                    {{ userForm.active ? 'Akun Aktif' : 'Akun Nonaktif' }}
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <div class="modal-footer bg-light">
-              <button type="button" class="btn btn-secondary btn-sm" @click="closeUserModal">Batal</button>
-              <button type="submit" class="btn btn-primary btn-sm" :disabled="savingUser">
-                <span v-if="savingUser" class="spinner-border spinner-border-sm me-2"></span>
-                Simpan Pengguna
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- ROLE FORM MODAL -->
-    <div
-      v-if="showModal"
-      class="modal fade show d-block"
-      tabindex="-1"
-      style="background: rgba(0, 0, 0, 0.5); overflow-y: auto;"
-    >
-      <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title fw-bold">
-              {{ isEditing ? 'Edit Role & Permission Matrix' : 'Buat Role Baru' }}
-            </h5>
-            <button type="button" class="btn-close" @click="closeModal"></button>
+          <!-- Nama Lengkap -->
+          <div class="fv-row mb-5">
+            <label class="required fs-6 fw-semibold mb-2">Nama Lengkap</label>
+            <input
+              type="text"
+              class="form-control form-control-solid"
+              v-model="userForm.name"
+              placeholder="Masukkan nama pengguna"
+              required
+            />
           </div>
 
-          <form @submit.prevent="onSubmitForm">
-            <div class="modal-body py-10 px-lg-17">
-              <div v-if="formError" class="alert alert-danger p-5 mb-5">
-                {{ formError }}
-              </div>
+          <!-- Email -->
+          <div class="fv-row mb-5">
+            <label class="required fs-6 fw-semibold mb-2">Alamat Email</label>
+            <input
+              type="email"
+              class="form-control form-control-solid"
+              v-model="userForm.email"
+              placeholder="contoh@bjb.co.id"
+              required
+            />
+          </div>
 
-              <div class="fv-row mb-7">
-                <label class="required fs-6 fw-semibold mb-2">Nama Role</label>
-                <input
-                  type="text"
-                  class="form-control form-control-solid"
-                  v-model="form.nama"
-                  placeholder="Contoh: Staf Verifikasi"
-                  required
-                />
-              </div>
+          <!-- Pilih Role -->
+          <div class="fv-row mb-5">
+            <label class="required fs-6 fw-semibold mb-2">Role (Peran)</label>
+            <select class="form-select form-select-solid" v-model="userForm.roleId" required>
+              <option value="" disabled>-- Pilih Role --</option>
+              <option v-for="r in roles" :key="r.id" :value="r.id">
+                {{ r.nama }} ({{ r.kode }})
+              </option>
+            </select>
+          </div>
 
-              <div class="fv-row mb-7">
-                <label class="required fs-6 fw-semibold mb-2">Kode Unique</label>
-                <input
-                  type="text"
-                  class="form-control form-control-solid"
-                  v-model="form.kode"
-                  placeholder="Contoh: staf_verifikasi"
-                  :disabled="isEditing"
-                  required
-                />
-              </div>
+          <!-- Pilih Mitra (jika role = mitra / roleId = 2) -->
+          <div v-if="userForm.roleId == 2" class="fv-row mb-5">
+            <label class="required fs-6 fw-semibold mb-2">Instansi / Mitra Bank</label>
+            <select class="form-select form-select-solid" v-model="userForm.mitraId" required>
+              <option value="" disabled>-- Pilih Bank / BPR --</option>
+              <option v-for="m in mitras" :key="m.id" :value="m.id">
+                {{ m.namaMitra }}
+              </option>
+            </select>
+          </div>
 
-              <div class="fv-row mb-7">
-                <div class="form-check form-switch form-check-custom form-check-solid">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    v-model="form.isSuperAdmin"
-                    id="superAdminSwitch"
-                  />
-                  <label class="form-check-label fw-bold text-gray-700 ms-3" for="superAdminSwitch">
-                    Super Admin (Bypass semua batasan permission)
-                  </label>
-                </div>
-              </div>
-
-              <div v-if="!form.isSuperAdmin" class="fv-row mb-7">
-                <label class="fs-6 fw-bold mb-4 d-block">Matriks Hak Akses Modul (Permissions)</label>
-
-                <div class="table-responsive">
-                  <table class="table table-bordered align-middle">
-                    <thead>
-                      <tr class="bg-light fw-bold">
-                        <th>Modul</th>
-                        <th class="text-center w-100px">Lihat</th>
-                        <th class="text-center w-100px">Tambah</th>
-                        <th class="text-center w-100px">Edit</th>
-                        <th class="text-center w-100px">Hapus</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="mod in flatModules" :key="mod.id">
-                        <td>
-                          <span :class="{ 'ms-4 text-muted': mod.parentId, 'fw-bold': !mod.parentId }">
-                            {{ mod.nama }}
-                          </span>
-                        </td>
-                        <td class="text-center">
-                          <input
-                            type="checkbox"
-                            class="form-check-input"
-                            v-model="formPermissions[mod.id].canView"
-                          />
-                        </td>
-                        <td class="text-center">
-                          <input
-                            type="checkbox"
-                            class="form-check-input"
-                            v-model="formPermissions[mod.id].canCreate"
-                          />
-                        </td>
-                        <td class="text-center">
-                          <input
-                            type="checkbox"
-                            class="form-check-input"
-                            v-model="formPermissions[mod.id].canEdit"
-                          />
-                        </td>
-                        <td class="text-center">
-                          <input
-                            type="checkbox"
-                            class="form-check-input"
-                            v-model="formPermissions[mod.id].canDelete"
-                          />
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+          <!-- Status -->
+          <div class="fv-row mb-5">
+            <label class="fs-6 fw-semibold mb-2">Status Akun</label>
+            <div class="form-check form-switch form-check-custom form-check-solid">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                v-model="userForm.active"
+                id="userActiveSwitch"
+              />
+              <label class="form-check-label fw-bold text-gray-700 ms-3" for="userActiveSwitch">
+                {{ userForm.active ? 'Akun Aktif' : 'Akun Nonaktif' }}
+              </label>
             </div>
-
-            <div class="modal-footer">
-              <button type="button" class="btn btn-light" @click="closeModal">Batal</button>
-              <button type="submit" class="btn btn-primary" :disabled="submitting">
-                <span v-if="submitting" class="spinner-border spinner-border-sm me-2"></span>
-                Simpan Role
-              </button>
-            </div>
-          </form>
+          </div>
         </div>
-      </div>
-    </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-6">
+          <button type="button" class="btn btn-secondary btn-sm" @click="closeUserModal">Batal</button>
+          <button type="submit" class="btn btn-primary btn-sm" :disabled="savingUser">
+            <span v-if="savingUser" class="spinner-border spinner-border-sm me-2"></span>
+            Simpan Pengguna
+          </button>
+        </div>
+      </form>
+    </UiModal>
+
+    <!-- ROLE FORM MODAL (Using Reusable UiModal) -->
+    <UiModal
+      v-model="showModal"
+      :title="isEditing ? 'Edit Role & Permission Matrix' : 'Buat Role Baru'"
+      icon="ki-solid ki-setting-4"
+      variant="primary"
+      size="lg"
+      :showDefaultFooter="false"
+    >
+      <form @submit.prevent="onSubmitForm">
+        <div class="text-start">
+          <div v-if="formError" class="alert alert-danger p-5 mb-5">
+            {{ formError }}
+          </div>
+
+          <div class="fv-row mb-7">
+            <label class="required fs-6 fw-semibold mb-2">Nama Role</label>
+            <input
+              type="text"
+              class="form-control form-control-solid"
+              v-model="form.nama"
+              placeholder="Contoh: Staf Verifikasi"
+              required
+            />
+          </div>
+
+          <div class="fv-row mb-7">
+            <label class="required fs-6 fw-semibold mb-2">Kode Unique</label>
+            <input
+              type="text"
+              class="form-control form-control-solid"
+              v-model="form.kode"
+              placeholder="Contoh: staf_verifikasi"
+              :disabled="isEditing"
+              required
+            />
+          </div>
+
+          <div class="fv-row mb-7">
+            <div class="form-check form-switch form-check-custom form-check-solid">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                v-model="form.isSuperAdmin"
+                id="superAdminSwitch"
+              />
+              <label class="form-check-label fw-bold text-gray-700 ms-3" for="superAdminSwitch">
+                Super Admin (Bypass semua batasan permission)
+              </label>
+            </div>
+          </div>
+
+          <div v-if="!form.isSuperAdmin" class="fv-row mb-7">
+            <label class="fs-6 fw-bold mb-4 d-block">Matriks Hak Akses Modul (Permissions)</label>
+
+            <div class="table-responsive">
+              <table class="table table-bordered align-middle">
+                <thead>
+                  <tr class="bg-light fw-bold">
+                    <th>Modul</th>
+                    <th class="text-center w-100px">Lihat</th>
+                    <th class="text-center w-100px">Tambah</th>
+                    <th class="text-center w-100px">Edit</th>
+                    <th class="text-center w-100px">Hapus</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="mod in flatModules" :key="mod.id">
+                    <td>
+                      <span :class="{ 'ms-4 text-muted': mod.parentId, 'fw-bold': !mod.parentId }">
+                        {{ mod.nama }}
+                      </span>
+                    </td>
+                    <td class="text-center">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        v-model="formPermissions[mod.id].canView"
+                      />
+                    </td>
+                    <td class="text-center">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        v-model="formPermissions[mod.id].canCreate"
+                      />
+                    </td>
+                    <td class="text-center">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        v-model="formPermissions[mod.id].canEdit"
+                      />
+                    </td>
+                    <td class="text-center">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        v-model="formPermissions[mod.id].canDelete"
+                      />
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-6">
+          <button type="button" class="btn btn-light" @click="closeModal">Batal</button>
+          <button type="submit" class="btn btn-primary" :disabled="submitting">
+            <span v-if="submitting" class="spinner-border spinner-border-sm me-2"></span>
+            Simpan Role
+          </button>
+        </div>
+      </form>
+    </UiModal>
   </div>
 </template>
 
@@ -506,9 +487,13 @@ import { defineComponent, ref, onMounted, computed } from "vue";
 import { getAssetPath } from "@/core/helpers/assets";
 import ApiService from "@/core/services/ApiService";
 import Swal from "sweetalert2";
+import UiModal from "@/components/ui/UiModal.vue";
 
 export default defineComponent({
   name: "utility-roles",
+  components: {
+    UiModal
+  },
   setup() {
     const activeTab = ref<"users" | "roles" | "modules">("users");
 

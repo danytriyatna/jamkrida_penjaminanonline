@@ -222,175 +222,215 @@
       </div>
     </div>
 
-    <!-- Dynamic CRUD Form Modal -->
-    <div
-      v-if="showModal"
-      class="modal fade show d-block"
-      tabindex="-1"
-      style="background: rgba(0, 0, 0, 0.5); overflow-y: auto;"
+    <!-- Dynamic CRUD Form Modal (Using Reusable UiModal) -->
+    <UiModal
+      v-model="showModal"
+      :title="`${isEditing ? 'Ubah Data' : 'Tambah Baru'} ${activeTabName}`"
+      icon="ki-solid ki-plus-circle"
+      variant="primary"
+      size="lg"
+      :showDefaultFooter="false"
     >
-      <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title fw-bold">
-              {{ isEditing ? 'Ubah Data' : 'Tambah Baru' }} {{ activeTabName }}
-            </h5>
-            <button type="button" class="btn-close" @click="closeModal"></button>
+      <form @submit.prevent="onSubmitForm">
+        <div class="text-start">
+          <div v-if="formError" class="alert alert-danger p-4 mb-5">
+            {{ formError }}
           </div>
 
-          <form @submit.prevent="onSubmitForm">
-            <div class="modal-body py-10 px-lg-17">
-              <div v-if="formError" class="alert alert-danger p-4 mb-5">
-                {{ formError }}
-              </div>
+          <!-- Form: Produk Penjaminan -->
+          <div v-if="activeTab === 'produk'">
+            <div class="fv-row mb-7">
+              <label class="required fs-6 fw-semibold mb-2">Kode Produk</label>
+              <input
+                type="text"
+                class="form-control form-control-solid"
+                v-model="form.kode"
+                placeholder="Contoh: KMU, KMG, KK"
+                required
+                :disabled="isEditing"
+              />
+            </div>
+            <div class="fv-row mb-7">
+              <label class="required fs-6 fw-semibold mb-2">Nama Produk Penjaminan</label>
+              <input
+                type="text"
+                class="form-control form-control-solid"
+                v-model="form.nama"
+                placeholder="Contoh: Kredit Modal Usaha, Kredit Multiguna"
+                required
+              />
+            </div>
+          </div>
 
-              <!-- Form: Produk Penjaminan -->
-              <div v-if="activeTab === 'produk'">
-                <div class="fv-row mb-7">
-                  <label class="required fs-6 fw-semibold mb-2">Kode Produk</label>
-                  <input
-                    type="text"
-                    class="form-control form-control-solid"
-                    v-model="form.kode"
-                    placeholder="Contoh: KMU, KMG, KK"
-                    required
-                    :disabled="isEditing"
-                  />
-                </div>
-                <div class="fv-row mb-7">
-                  <label class="required fs-6 fw-semibold mb-2">Nama Produk</label>
-                  <input
-                    type="text"
-                    class="form-control form-control-solid"
-                    v-model="form.nama"
-                    placeholder="Contoh: Kredit Multiguna Utama"
-                    required
-                  />
-                </div>
-                <div class="fv-row mb-7">
-                  <label class="required fs-6 fw-semibold mb-2">Cover Percentage (Rasio Cover 0.0 - 1.0)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="1"
-                    class="form-control form-control-solid"
-                    v-model="form.coverPercentage"
-                    placeholder="Contoh: 0.75 untuk 75%"
-                    required
-                  />
-                </div>
-                <div class="fv-row mb-7">
-                  <label class="required fs-6 fw-semibold mb-2">Batas Pengajuan (Hari)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    class="form-control form-control-solid"
-                    v-model="form.batasHari"
-                    placeholder="Contoh: 180 Hari"
-                    required
-                  />
-                </div>
+          <!-- Form: Mitra Penerima -->
+          <div v-if="activeTab === 'mitra'">
+            <div class="fv-row mb-7">
+              <label class="required fs-6 fw-semibold mb-2">Nama Instansi Mitra</label>
+              <input
+                type="text"
+                class="form-control form-control-solid"
+                v-model="form.namaMitra"
+                placeholder="Contoh: Bank BJB Cabang Utama"
+                required
+              />
+            </div>
+            <div class="fv-row mb-7">
+              <label class="required fs-6 fw-semibold mb-2">Kode Mitra (Singkat)</label>
+              <input
+                type="text"
+                class="form-control form-control-solid"
+                v-model="form.kodeMitra"
+                placeholder="Contoh: BJB-BDG"
+                required
+              />
+            </div>
+            <div class="row">
+              <div class="col-md-6 fv-row mb-7">
+                <label class="required fs-6 fw-semibold mb-2">Nama Bank Pembayaran</label>
+                <input
+                  type="text"
+                  class="form-control form-control-solid"
+                  v-model="form.bankTujuan"
+                  placeholder="Contoh: Bank BJB"
+                  required
+                />
               </div>
-
-              <!-- Form: Mitra -->
-              <div v-if="activeTab === 'mitra'">
-                <div class="fv-row mb-7">
-                  <label class="required fs-6 fw-semibold mb-2">Nama Mitra</label>
-                  <input
-                    type="text"
-                    class="form-control form-control-solid"
-                    v-model="form.namaMitra"
-                    placeholder="Contoh: Bank BJB"
-                    required
-                  />
-                </div>
-                <div class="fv-row mb-7">
-                  <label class="required fs-6 fw-semibold mb-2">Alamat Kantor</label>
-                  <textarea
-                    class="form-control form-control-solid"
-                    rows="3"
-                    v-model="form.alamat"
-                    placeholder="Masukkan alamat lengkap kantor mitra"
-                    required
-                  ></textarea>
-                </div>
-                <div class="fv-row mb-7">
-                  <label class="required fs-6 fw-semibold mb-2">Kontak / Telepon</label>
-                  <input
-                    type="text"
-                    class="form-control form-control-solid"
-                    v-model="form.kontak"
-                    placeholder="Contoh: 022-xxxxx / Hubungan Kemitraan"
-                    required
-                  />
-                </div>
-              </div>
-
-              <!-- Form: Penyebab Klaim -->
-              <div v-if="activeTab === 'penyebab'">
-                <div class="fv-row mb-7">
-                  <label class="required fs-6 fw-semibold mb-2">Nama Penyebab Klaim</label>
-                  <input
-                    type="text"
-                    class="form-control form-control-solid"
-                    v-model="form.namaPenyebab"
-                    placeholder="Contoh: Debitur Macet, Debitur Meninggal"
-                    required
-                  />
-                </div>
-              </div>
-
-              <!-- Form: Pejabat Komite -->
-              <div v-if="activeTab === 'pejabat'">
-                <div class="fv-row mb-7">
-                  <label class="required fs-6 fw-semibold mb-2">Nama Pejabat</label>
-                  <input
-                    type="text"
-                    class="form-control form-control-solid"
-                    v-model="form.nama"
-                    placeholder="Masukkan nama lengkap beserta gelar"
-                    required
-                  />
-                </div>
-                <div class="fv-row mb-7">
-                  <label class="required fs-6 fw-semibold mb-2">Jabatan Komite</label>
-                  <select class="form-select form-select-solid" v-model="form.jabatan" required>
-                    <option value="Ketua Komite Klaim">Ketua Komite Klaim</option>
-                    <option value="Anggota Komite Klaim">Anggota Komite Klaim</option>
-                  </select>
-                </div>
-                <div class="fv-row mb-7">
-                  <label class="required fs-6 fw-semibold mb-2">Urutan Penandatanganan (E-Sign)</label>
-                  <input
-                    type="number"
-                    min="1"
-                    class="form-control form-control-solid"
-                    v-model="form.urutan"
-                    placeholder="Contoh: 1, 2, 3"
-                    required
-                  />
-                  <span class="text-muted fs-8">Urutan terkecil akan menandatangani berita acara/dokumen terlebih dahulu.</span>
-                </div>
+              <div class="col-md-6 fv-row mb-7">
+                <label class="required fs-6 fw-semibold mb-2">Nomor Rekening</label>
+                <input
+                  type="text"
+                  class="form-control form-control-solid"
+                  v-model="form.noRekening"
+                  placeholder="Contoh: 001299-11-229"
+                  required
+                />
               </div>
             </div>
-
-            <div class="modal-footer">
-              <button type="button" class="btn btn-light" @click="closeModal" :disabled="saving">
-                Batal
-              </button>
-              <button type="submit" class="btn btn-primary" :disabled="saving">
-                <span v-if="!saving">Simpan</span>
-                <span v-else>
-                  Menyimpan...
-                  <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
-                </span>
-              </button>
+            <div class="fv-row mb-7">
+              <label class="required fs-6 fw-semibold mb-2">Nama Pemilik Rekening</label>
+              <input
+                type="text"
+                class="form-control form-control-solid"
+                v-model="form.namaRekening"
+                placeholder="Contoh: PT Bank BJB - Divisi Kredit"
+                required
+              />
             </div>
-          </form>
+          </div>
+
+          <!-- Form: Penyebab Klaim -->
+          <div v-if="activeTab === 'penyebab'">
+            <div class="fv-row mb-7">
+              <label class="required fs-6 fw-semibold mb-2">Kode Penyebab</label>
+              <input
+                type="text"
+                class="form-control form-control-solid"
+                v-model="form.kode"
+                placeholder="Contoh: WANPRESTASI, MACET, PAILIT"
+                required
+                :disabled="isEditing"
+              />
+            </div>
+            <div class="fv-row mb-7">
+              <label class="required fs-6 fw-semibold mb-2">Penyebab Klaim (Kategori)</label>
+              <input
+                type="text"
+                class="form-control form-control-solid"
+                v-model="form.namaPenyebab"
+                placeholder="Contoh: Debitur Mengalami Wanprestasi / Gagal Bayar"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Form: Jenis Dokumen -->
+          <div v-if="activeTab === 'dokumen'">
+            <div class="fv-row mb-7">
+              <label class="required fs-6 fw-semibold mb-2">Kode Dokumen</label>
+              <input
+                type="text"
+                class="form-control form-control-solid"
+                v-model="form.kode"
+                placeholder="Contoh: KTP, SPG, SKU, LHA"
+                required
+                :disabled="isEditing"
+              />
+            </div>
+            <div class="fv-row mb-7">
+              <label class="required fs-6 fw-semibold mb-2">Nama Persyaratan Dokumen</label>
+              <input
+                type="text"
+                class="form-control form-control-solid"
+                v-model="form.nama"
+                placeholder="Contoh: Fotokopi KTP Debitur & Pasangan"
+                required
+              />
+            </div>
+            <div class="fv-row mb-7">
+              <div class="form-check form-check-custom form-check-solid">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  v-model="form.wajib"
+                  :true-value="1"
+                  :false-value="0"
+                  id="dokumen_wajib"
+                />
+                <label class="form-check-label fw-bold text-gray-800" for="dokumen_wajib">
+                  Dokumen Bersifat Wajib <span class="text-muted fw-normal">(mitra wajib mengunggah agar berkas bisa dikirim)</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form: Pejabat Komite -->
+          <div v-if="activeTab === 'pejabat'">
+            <div class="fv-row mb-7">
+              <label class="required fs-6 fw-semibold mb-2">Nama Pejabat</label>
+              <input
+                type="text"
+                class="form-control form-control-solid"
+                v-model="form.nama"
+                placeholder="Masukkan nama lengkap beserta gelar"
+                required
+              />
+            </div>
+            <div class="fv-row mb-7">
+              <label class="required fs-6 fw-semibold mb-2">Jabatan Komite</label>
+              <select class="form-select form-select-solid" v-model="form.jabatan" required>
+                <option value="Ketua Komite Klaim">Ketua Komite Klaim</option>
+                <option value="Anggota Komite Klaim">Anggota Komite Klaim</option>
+              </select>
+            </div>
+            <div class="fv-row mb-7">
+              <label class="required fs-6 fw-semibold mb-2">Urutan Penandatanganan (E-Sign)</label>
+              <input
+                type="number"
+                min="1"
+                class="form-control form-control-solid"
+                v-model="form.urutan"
+                placeholder="Contoh: 1, 2, 3"
+                required
+              />
+              <span class="text-muted fs-8">Urutan terkecil akan menandatangani berita acara/dokumen terlebih dahulu.</span>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-6">
+          <button type="button" class="btn btn-light" @click="closeModal" :disabled="saving">
+            Batal
+          </button>
+          <button type="submit" class="btn btn-primary" :disabled="saving">
+            <span v-if="!saving">Simpan</span>
+            <span v-else>
+              Menyimpan...
+              <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+            </span>
+          </button>
+        </div>
+      </form>
+    </UiModal>
   </div>
 </template>
 
@@ -415,7 +455,10 @@ interface PaginationMeta {
 }
 
 export default defineComponent({
-  name: "referensi-master",
+  name: "referensi-main",
+  components: {
+    UiModal
+  },
   setup() {
     const tabs: Tab[] = [
       { id: "produk", name: "Produk Penjaminan", endpoint: "referensi/produk-penjaminans" },

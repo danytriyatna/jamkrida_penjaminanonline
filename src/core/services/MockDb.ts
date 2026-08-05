@@ -313,7 +313,7 @@ class MockDb {
         logoUrlPublic: null,
         faviconUrl: null,
         primaryColor: "#2c3691",
-        secondaryColor: "#0da24b",
+        secondaryColor: "#00a3e0",
         fontFamily: "Inter",
         footerText: "© 2026 PT Jamkrida Jabar (Perseroda). All rights reserved.",
         contactEmail: "info@jamkridajabar.co.id",

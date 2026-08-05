@@ -3,6 +3,12 @@ import { createPinia } from "pinia";
 import { Tooltip } from "bootstrap";
 import App from "./App.vue";
 
+import "@/lib/jquery-global";
+import "select2";
+
+import { VueDatePicker } from "@vuepic/vue-datepicker";
+import "@vuepic/vue-datepicker/dist/main.css";
+
 /*
 TIP: To get started with clean router change path to @/router/clean.ts.
  */
@@ -32,6 +38,8 @@ initKtIcon(app);
 initVeeValidate();
 
 app.use(i18n);
+
+app.component("VueDatePicker", VueDatePicker);
 
 app.directive("tooltip", (el) => {
   new Tooltip(el);

@@ -184,103 +184,100 @@
     </div>
     </div>
 
-    <!-- DETAIL MODAL POPUP -->
-    <div v-if="selectedClaim" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
-      <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg">
-          <div class="modal-header bg-light py-4">
-            <h4 class="modal-title fw-bold text-gray-900 d-flex align-items-center gap-3">
-              <KTIcon icon-name="file-sheet" icon-class="fs-2 text-primary" />
-              Detail Berkas Klaim: {{ selectedClaim.kodeKlaim }}
-            </h4>
-            <button type="button" class="btn-close" @click="closeDetailModal"></button>
+    <!-- DETAIL MODAL POPUP (Using Reusable UiModal) -->
+    <UiModal
+      :modelValue="!!selectedClaim"
+      @update:modelValue="closeDetailModal"
+      title="Detail Berkas Klaim"
+      :subtitle="selectedClaim ? `Kode Klaim: ${selectedClaim.kodeKlaim}` : ''"
+      icon="ki-solid ki-file-sheet"
+      variant="primary"
+      size="lg"
+      :showDefaultFooter="false"
+    >
+      <div v-if="selectedClaim" class="text-start">
+        <!-- Header Badges -->
+        <div class="d-flex align-items-center justify-content-between mb-6 pb-4 border-bottom">
+          <div>
+            <span class="text-muted fs-7 d-block">Status Berkas Saat Ini:</span>
+            <span v-if="selectedClaim.status?.kode === 'disetujui' && selectedClaim.disetujuiConfirmedByMitra" class="badge py-2 px-3 fs-7 fw-bold badge-light-success text-success border border-success">
+              ✅ Disetujui (Mitra Setuju)
+            </span>
+            <span v-else-if="selectedClaim.status?.kode === 'disetujui'" class="badge py-2 px-3 fs-7 fw-bold badge-light-warning text-warning border border-warning border-dashed">
+              ⏳ Disetujui (Menunggu Respon Mitra)
+            </span>
+            <span v-else :class="`badge py-2 px-3 fs-7 fw-bold badge-light-${getStatusColor(selectedClaim.status?.kode)}`">
+              {{ selectedClaim.status?.nama || 'Status Tidak Diketahui' }}
+            </span>
           </div>
-
-          <div class="modal-body p-7">
-            <!-- Header Badges -->
-            <div class="d-flex align-items-center justify-content-between mb-6 pb-4 border-bottom">
-              <div>
-                <span class="text-muted fs-7 d-block">Status Berkas Saat Ini:</span>
-                <span v-if="selectedClaim.status?.kode === 'disetujui' && selectedClaim.disetujuiConfirmedByMitra" class="badge py-2 px-3 fs-7 fw-bold badge-light-success text-success border border-success">
-                  ✅ Disetujui (Mitra Setuju)
-                </span>
-                <span v-else-if="selectedClaim.status?.kode === 'disetujui'" class="badge py-2 px-3 fs-7 fw-bold badge-light-warning text-warning border border-warning border-dashed">
-                  ⏳ Disetujui (Menunggu Respon Mitra)
-                </span>
-                <span v-else :class="`badge py-2 px-3 fs-7 fw-bold badge-light-${getStatusColor(selectedClaim.status?.kode)}`">
-                  {{ selectedClaim.status?.nama || 'Status Tidak Diketahui' }}
-                </span>
-              </div>
-              <div class="text-end">
-                <span class="text-muted fs-7 d-block">Tanggal Pengajuan:</span>
-                <span class="fw-bold text-gray-800 fs-7">{{ formatDate(selectedClaim.tanggalPengajuan) }}</span>
-              </div>
-            </div>
-
-            <!-- Detail Grid -->
-            <div class="row g-6 mb-6">
-              <!-- Left Column: Debitur & SP Info -->
-              <div class="col-md-6 border-end">
-                <h5 class="fw-bold text-gray-800 mb-4 pb-2 border-bottom">Informasi Debitur & Sertifikat</h5>
-                
-                <div class="mb-4">
-                  <span class="text-muted fs-8 d-block">Nama Debitur</span>
-                  <span class="fw-bold text-gray-900 fs-6">{{ selectedClaim.sertifikatPenjaminan?.namaDebitur || '-' }}</span>
-                </div>
-
-                <div class="mb-4">
-                  <span class="text-muted fs-8 d-block">Nomor Sertifikat Penjaminan (SP)</span>
-                  <span class="fw-bold text-primary fs-7">{{ selectedClaim.sertifikatPenjaminan?.nomorSp || '-' }}</span>
-                </div>
-
-                <div class="mb-4">
-                  <span class="text-muted fs-8 d-block">Mitra Bank / BPR</span>
-                  <span class="fw-bold text-gray-800 fs-7">{{ selectedClaim.mitra?.namaMitra || '-' }}</span>
-                </div>
-
-                <div class="mb-4">
-                  <span class="text-muted fs-8 d-block">Penyebab Klaim</span>
-                  <span class="fw-bold text-gray-800 fs-7">{{ selectedClaim.penyebabKlaim?.namaPenyebab || 'Debitur Wanprestasi / Macet Kredit' }}</span>
-                </div>
-              </div>
-
-              <!-- Right Column: Financial Info -->
-              <div class="col-md-6">
-                <h5 class="fw-bold text-gray-800 mb-4 pb-2 border-bottom">Rincian Finansial Klaim</h5>
-
-                <div class="mb-4">
-                  <span class="text-muted fs-8 d-block">Plafond Kredit Dijamin</span>
-                  <span class="fw-bold text-gray-900 fs-6">{{ formatCurrency(selectedClaim.sertifikatPenjaminan?.plafonKredit) }}</span>
-                </div>
-
-                <div class="mb-4">
-                  <span class="text-muted fs-8 d-block">Baki Debet Macet</span>
-                  <span class="fw-bold text-danger fs-6">{{ formatCurrency(selectedClaim.bakiDebetKlaim) }}</span>
-                </div>
-
-                <div class="mb-4">
-                  <span class="text-muted fs-8 d-block">Persentase Cover Jaminan</span>
-                  <span class="fw-bold text-info fs-6">{{ (selectedClaim.coverPercentageSnapshot || 0.7) * 100 }}%</span>
-                </div>
-
-                <div class="p-4 rounded bg-light-primary border border-primary border-dashed">
-                  <span class="text-primary fw-bold fs-8 d-block">Nominal Proyeksi / Hak Bayar Klaim</span>
-                  <span class="fw-bolder text-primary fs-3">{{ formatCurrency(selectedClaim.nilaiKlaim) }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal-footer bg-light py-3">
-            <button type="button" class="btn btn-secondary btn-sm" @click="closeDetailModal">Tutup</button>
-            <button type="button" class="btn btn-primary btn-sm" @click="navigateToModule(selectedClaim)">
-              <KTIcon icon-name="external-drive" icon-class="fs-3 me-1" />
-              Buka Modul Berkas
-            </button>
+          <div class="text-end">
+            <span class="text-muted fs-7 d-block">Tanggal Pengajuan:</span>
+            <span class="fw-bold text-gray-800 fs-7">{{ formatDate(selectedClaim.tanggalPengajuan) }}</span>
           </div>
         </div>
+
+        <!-- Detail Grid -->
+        <div class="row g-6 mb-6">
+          <!-- Left Column: Debitur & SP Info -->
+          <div class="col-md-6 border-end">
+            <h5 class="fw-bold text-gray-800 mb-4 pb-2 border-bottom">Informasi Debitur & Sertifikat</h5>
+            
+            <div class="mb-4">
+              <span class="text-muted fs-8 d-block">Nama Debitur</span>
+              <span class="fw-bold text-gray-900 fs-6">{{ selectedClaim.sertifikatPenjaminan?.namaDebitur || '-' }}</span>
+            </div>
+
+            <div class="mb-4">
+              <span class="text-muted fs-8 d-block">Nomor Sertifikat Penjaminan (SP)</span>
+              <span class="fw-bold text-primary fs-7">{{ selectedClaim.sertifikatPenjaminan?.nomorSp || '-' }}</span>
+            </div>
+
+            <div class="mb-4">
+              <span class="text-muted fs-8 d-block">Mitra Bank / BPR</span>
+              <span class="fw-bold text-gray-800 fs-7">{{ selectedClaim.mitra?.namaMitra || '-' }}</span>
+            </div>
+
+            <div class="mb-4">
+              <span class="text-muted fs-8 d-block">Cabang Rekanan</span>
+              <span class="fw-bold text-gray-800 fs-7">{{ selectedClaim.sertifikatPenjaminan?.cabangMitra || '-' }}</span>
+            </div>
+          </div>
+
+          <!-- Right Column: Financial Info -->
+          <div class="col-md-6">
+            <h5 class="fw-bold text-gray-800 mb-4 pb-2 border-bottom">Informasi Keuangan Klaim</h5>
+            
+            <div class="mb-4">
+              <span class="text-muted fs-8 d-block">Plafond Kredit Awal</span>
+              <span class="fw-bold text-gray-800 fs-6">{{ formatCurrency(selectedClaim.sertifikatPenjaminan?.plafonKredit) }}</span>
+            </div>
+
+            <div class="mb-4">
+              <span class="text-muted fs-8 d-block">Baki Debet Macet Terlapor</span>
+              <span class="fw-bold text-danger fs-6">{{ formatCurrency(selectedClaim.bakiDebetKlaim) }}</span>
+            </div>
+
+            <div class="mb-4">
+              <span class="text-muted fs-8 d-block">Tingkat Penutupan (Cover Snapshot)</span>
+              <span class="fw-bold text-gray-800 fs-7">{{ selectedClaim.coverPercentageSnapshot * 100 }}% Penjaminan</span>
+            </div>
+
+            <div class="mb-4">
+              <span class="text-muted fs-8 d-block">Nilai Tuntutan Klaim</span>
+              <span class="fw-bold text-primary fs-5">{{ formatCurrency(selectedClaim.nilaiKlaim) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-6">
+          <button type="button" class="btn btn-light btn-sm" @click="closeDetailModal">Tutup</button>
+          <button type="button" class="btn btn-primary btn-sm" @click="navigateToModule(selectedClaim)">
+            <KTIcon icon-name="external-drive" icon-class="fs-3 me-1" />
+            Buka Modul Berkas
+          </button>
+        </div>
       </div>
-    </div>
+    </UiModal>
 </template>
 
 <script lang="ts">
@@ -288,6 +285,7 @@ import { defineComponent, onMounted, ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import ApiService from "@/core/services/ApiService";
 import { useAuthStore } from "@/stores/auth";
+import UiModal from "@/components/ui/UiModal.vue";
 
 // Aturan Aktif/Riwayat berlaku sama untuk semua role: begitu klaim sudah dibayar
 // (dibayar/selesai/ditolak = tuntas), masuk Riwayat. Sebelum itu, semua tahap proses
@@ -296,6 +294,9 @@ const HISTORY_STATUSES = ["dibayar", "selesai", "ditolak"];
 
 export default defineComponent({
   name: "dashboard-main",
+  components: {
+    UiModal
+  },
   setup() {
     const router = useRouter();
     const authStore = useAuthStore();

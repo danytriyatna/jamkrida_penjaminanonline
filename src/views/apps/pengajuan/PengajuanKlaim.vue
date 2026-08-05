@@ -1,24 +1,38 @@
 <template>
   <div>
-    <!-- Header Summary Widget -->
+    <!-- Header Summary Widget (Varian B: Vibrant Gradient KPI Cards) -->
     <div class="row g-5 mb-8">
-      <div class="col-md-3" v-for="(stat, i) in claimStats" :key="i">
+      <div class="col-12 col-sm-6 col-xl-3" v-for="(stat, i) in claimStats" :key="i">
         <div 
-          :class="['card hoverable cursor-pointer transition-all', activeGroup === stat.group ? `bg-light-${stat.color} border border-2 border-${stat.color} shadow-sm` : 'bg-light']" 
+          class="card h-100 border-0 rounded-4 transition-all cursor-pointer shadow-sm position-relative overflow-hidden p-6"
+          :style="{ 
+            background: stat.gradient, 
+            minHeight: '145px',
+            transform: activeGroup === stat.group ? 'scale(1.03)' : 'none',
+            boxShadow: activeGroup === stat.group ? '0 10px 25px rgba(0,0,0,0.15) !important' : 'none',
+            border: activeGroup === stat.group ? '2px solid rgba(255,255,255,0.4) !important' : 'none'
+          }"
           @click="toggleGroupFilter(stat.group)"
         >
-          <div class="card-body my-2">
-            <div class="d-flex align-items-center justify-content-between">
-              <span :class="`text-${stat.color} fw-bold fs-6 d-block`">{{ stat.title }}</span>
-              <span v-if="activeGroup === stat.group" :class="`badge badge-${stat.color} fs-9`">Aktif Filter</span>
+          <!-- Pulsing Sonar element for active filter -->
+          <div class="position-absolute top-0 end-0 m-4 d-flex align-items-center gap-2">
+            <span v-if="activeGroup === stat.group" class="badge bg-white bg-opacity-20 text-white fs-9 border border-white border-opacity-25 rounded-pill px-2 py-1">Aktif</span>
+            <div class="symbol symbol-30px symbol-circle bg-white bg-opacity-15 d-flex align-items-center justify-content-center">
+              <i :class="[stat.icon, 'text-white fs-4']"></i>
             </div>
-            <div class="d-flex align-items-center mt-2">
-              <span class="fs-2hx fw-bold text-gray-900 me-2">{{ stat.count }}</span>
-              <span class="text-muted fs-7">berkas</span>
-            </div>
-            <div class="progress h-6px mt-3" style="background: rgba(255,255,255,0.5)">
-              <div :class="`progress-bar bg-${stat.color}`" role="progressbar" :style="`width: ${stat.pct}%`"></div>
-            </div>
+          </div>
+          
+          <span class="fs-9 fw-boldest text-white text-opacity-70 text-uppercase ls-2">{{ stat.group }}</span>
+          <h4 class="fs-6 fw-boldest text-white mt-1 mb-3">{{ stat.title }}</h4>
+          
+          <div class="mt-auto d-flex align-items-baseline gap-2">
+            <div class="fs-2hx fw-boldest text-white lh-1">{{ stat.count }}</div>
+            <span class="fs-9 text-white text-opacity-75">berkas ({{ stat.pct }}%)</span>
+          </div>
+          
+          <!-- Decorative Watermark Icon in background -->
+          <div class="position-absolute end-0 bottom-0 opacity-10 pe-3 pb-2 pointer-events-none" style="transform: translate(10%, 20%);">
+            <i :class="[stat.icon, 'fs-4x text-white']"></i>
           </div>
         </div>
       </div>
@@ -635,75 +649,65 @@
       </div>
     </div>
 
-    <!-- NATIVE BOOTSTRAP MODAL FOR PREVIEWING DOCUMENT (75VH HEIGHT) -->
-    <!-- BANDING MODAL -->
-    <div v-if="showBandingModal" class="modal fade show d-block" style="background: rgba(0,0,0,0.5); overflow-y:auto;">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title fw-bold">Ajukan Banding Klaim</h5>
-            <button type="button" class="btn-close" @click="showBandingModal = false"></button>
-          </div>
-          <form @submit.prevent="submitBanding">
-            <div class="modal-body">
-              <div class="alert alert-warning fs-8 mb-4">
-                Klaim akan dikembalikan untuk assessment ulang oleh Jamkrida. Proses pembayaran akan tertunda selama banding diproses.
-              </div>
-              <div class="fv-row mb-6">
-                <label class="required fs-6 fw-semibold mb-2">Alasan Banding</label>
-                <textarea class="form-control form-control-solid" rows="4" v-model="bandingAlasan" placeholder="Jelaskan alasan Anda tidak sependapat dengan keputusan klaim ini, sertakan data/bukti pendukung jika ada..." required></textarea>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-light btn-sm" @click="showBandingModal = false">Batal</button>
-              <button type="submit" class="btn btn-danger btn-sm" :disabled="submittingBanding">Ajukan Banding</button>
-            </div>
-          </form>
+    <!-- BANDING MODAL (Using Reusable UiModal) -->
+    <UiModal
+      v-model="showBandingModal"
+      title="Ajukan Banding Klaim"
+      icon="ki-solid ki-warning"
+      variant="danger"
+      :showDefaultFooter="false"
+    >
+      <form @submit.prevent="submitBanding">
+        <div class="alert alert-warning fs-8 mb-4 text-start">
+          Klaim akan dikembalikan untuk assessment ulang oleh Jamkrida. Proses pembayaran akan tertunda selama banding diproses.
         </div>
-      </div>
-    </div>
+        <div class="fv-row mb-6 text-start">
+          <label class="required fs-6 fw-semibold mb-2">Alasan Banding</label>
+          <textarea class="form-control form-control-solid" rows="4" v-model="bandingAlasan" placeholder="Jelaskan alasan Anda tidak sependapat dengan keputusan klaim ini, sertakan data/bukti pendukung jika ada..." required></textarea>
+        </div>
+        <div class="d-flex justify-content-end gap-2">
+          <button type="button" class="btn btn-light btn-sm" @click="showBandingModal = false">Batal</button>
+          <button type="submit" class="btn btn-danger btn-sm" :disabled="submittingBanding">Ajukan Banding</button>
+        </div>
+      </form>
+    </UiModal>
 
-    <div v-if="showDocModal && activeDoc" class="modal fade show d-block" style="background: rgba(0, 0, 0, 0.65); z-index: 1055;" tabindex="-1">
-      <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content shadow-lg border-0">
-          <div class="modal-header py-3 bg-light">
-            <div class="d-flex align-items-center gap-3">
-              <i class="bi bi-file-earmark-pdf fs-2 text-primary"></i>
-              <div>
-                <h5 class="modal-title fw-bold text-gray-900 mb-0">{{ activeDoc.jenisDokumen?.nama || 'Pratinjau Dokumen' }}</h5>
-                <span class="text-muted fs-8">Status: Terunggah & Valid • {{ formatDate(activeDoc.uploadedAt) }}</span>
-              </div>
-            </div>
-            <button type="button" class="btn-close" @click="showDocModal = false"></button>
-          </div>
-
-          <div class="modal-body p-2" style="height: 75vh; min-height: 550px;">
-            <img 
-              v-if="activeDoc.fileType?.startsWith('image/') || activeDoc.fileName?.match(/\.(jpg|jpeg|png|gif|webp)$/i)" 
-              :src="activeDoc.filePath" 
-              class="w-100 h-100 rounded" 
-              style="object-fit: contain; background: #1e1e2d;"
-            />
-            <iframe 
-              v-else 
-              :src="activeDoc.filePath || '/documents/uploaded_sample.pdf'" 
-              class="w-100 h-100 rounded border-0"
-              style="background: #fff;"
-            ></iframe>
-          </div>
-
-          <div class="modal-footer py-2 bg-light justify-content-between">
-            <span class="text-muted fs-8">Mode Pratinjau Dokumen 1 Halaman Utuh</span>
-            <div>
-              <a :href="activeDoc.filePath || '/documents/uploaded_sample.pdf'" target="_blank" class="btn btn-sm btn-primary me-2">
-                <i class="bi bi-download me-1"></i> Buka / Unduh Berkas
-              </a>
-              <button type="button" class="btn btn-sm btn-light" @click="showDocModal = false">Tutup</button>
-            </div>
+    <!-- DOCUMENT PREVIEW MODAL (Using Reusable UiModal) -->
+    <UiModal
+      v-model="showDocModal"
+      :title="activeDoc?.jenisDokumen?.nama || 'Pratinjau Dokumen'"
+      :subtitle="activeDoc ? `Status: Terunggah & Valid • ${formatDate(activeDoc.uploadedAt)}` : ''"
+      icon="ki-solid ki-document"
+      variant="primary"
+      size="xl"
+      :showDefaultFooter="false"
+    >
+      <div v-if="activeDoc" class="d-flex flex-column h-100">
+        <div class="flex-grow-1" style="height: 75vh; min-height: 550px;">
+          <img 
+            v-if="activeDoc.fileType?.startsWith('image/') || activeDoc.fileName?.match(/\.(jpg|jpeg|png|gif|webp)$/i)" 
+            :src="activeDoc.filePath" 
+            class="w-100 h-100 rounded shadow-sm" 
+            style="object-fit: contain; background: #1e1e2d;"
+          />
+          <iframe 
+            v-else 
+            :src="activeDoc.filePath || '/documents/uploaded_sample.pdf'" 
+            class="w-100 h-100 rounded border-0 shadow-sm"
+            style="background: #fff;"
+          ></iframe>
+        </div>
+        <div class="d-flex align-items-center justify-content-between mt-6">
+          <span class="text-muted fs-8">Mode Pratinjau Dokumen 1 Halaman Utuh</span>
+          <div>
+            <a :href="activeDoc.filePath || '/documents/uploaded_sample.pdf'" target="_blank" class="btn btn-sm btn-primary me-2">
+              <i class="bi bi-download me-1"></i> Buka / Unduh Berkas
+            </a>
+            <button type="button" class="btn btn-sm btn-light" @click="showDocModal = false">Tutup</button>
           </div>
         </div>
       </div>
-    </div>
+    </UiModal>
   </div>
 </template>
 
@@ -711,9 +715,13 @@
 import { defineComponent, onMounted, ref, computed, watch } from "vue";
 import ApiService from "@/core/services/ApiService";
 import Swal from "sweetalert2/dist/sweetalert2.js";
+import UiModal from "@/components/ui/UiModal.vue";
 
 export default defineComponent({
   name: "pengajuan-klaim",
+  components: {
+    UiModal
+  },
   setup() {
     const viewMode = ref<"list" | "create" | "edit" | "detail">("list");
     const editId = ref<number | null>(null);
@@ -757,10 +765,10 @@ export default defineComponent({
 
     // Compute status stats dynamically
     const claimStats = ref([
-      { title: "Draft & Diajukan", group: "baru", count: 0, pct: 0, color: "info" },
-      { title: "Sedang Diproses", group: "proses", count: 0, pct: 0, color: "primary" },
-      { title: "Disetujui / Memo", group: "setuju", count: 0, pct: 0, color: "success" },
-      { title: "Selesai / Ditolak", group: "final", count: 0, pct: 0, color: "danger" }
+      { title: "Draft & Diajukan", group: "baru", count: 0, pct: 0, color: "info", gradient: "linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)", icon: "ki-outline ki-document" },
+      { title: "Sedang Diproses", group: "proses", count: 0, pct: 0, color: "primary", gradient: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)", icon: "ki-outline ki-time" },
+      { title: "Disetujui / Memo", group: "setuju", count: 0, pct: 0, color: "success", gradient: "linear-gradient(135deg, #00b09b 0%, #96c93d 100%)", icon: "ki-outline ki-shield-check" },
+      { title: "Selesai / Ditolak", group: "final", count: 0, pct: 0, color: "danger", gradient: "linear-gradient(135deg, #ff0844 0%, #ffb199 100%)", icon: "ki-outline ki-shield-cross" }
     ]);
 
     const fetchClaims = async () => {

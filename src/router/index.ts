@@ -173,6 +173,15 @@ const routes: Array<RouteRecordRaw> = [
           breadcrumbs: ["Regaransi", "Kredit Macet", "Pembayaran"],
         },
       },
+      {
+        path: "/template-show",
+        name: "template-show",
+        component: () => import("@/views/TemplateShow.vue"),
+        meta: {
+          pageTitle: "Template & Design System",
+          breadcrumbs: ["Template"],
+        },
+      },
     ],
   },
   {

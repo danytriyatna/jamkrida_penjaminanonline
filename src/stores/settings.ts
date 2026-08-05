@@ -16,7 +16,7 @@ export const useSettingsStore = defineStore("settings", () => {
   const logoUrl = ref<string | null>(null);
   const faviconUrl = ref<string | null>(null);
   const primaryColor = ref("#2c3691");
-  const secondaryColor = ref("#0da24b");
+  const secondaryColor = ref("#00a3e0");
   const fontFamily = ref("Inter");
   const footerText = ref("© 2026 PT Jamkrida Jabar (Perseroda). All rights reserved.");
   const contactEmail = ref("info@jamkridajabar.co.id");

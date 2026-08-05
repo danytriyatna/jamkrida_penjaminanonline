@@ -1,61 +1,84 @@
 <template>
-  <div>
-    <!-- Roles Info banner -->
-    <div class="row g-5 mb-8">
-      <div class="col-md-4">
-        <div :class="['card border-dashed p-4 d-flex flex-row align-items-center', isKlaim ? 'bg-light-primary border-primary' : 'bg-light border-gray-300']">
-          <KTIcon icon-name="document" :icon-class="`fs-2hx me-3 text-${isKlaim ? 'primary' : 'muted'}`" />
-          <div>
-            <span class="fw-bold d-block fs-7 text-gray-800">Otoritas Staf Klaim Jamkrida</span>
-            <span class="fs-9 text-muted" v-if="isKlaim">Anda Aktif. Berwenang untuk menerbitkan Memo Bayar dan mengirimkan bukti transfer ke Mitra.</span>
-            <span class="fs-9 text-muted" v-else>Nonaktif. Masuk sebagai akun Staf Klaim untuk menerbitkan memo/bukti bayar.</span>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div :class="['card border-dashed p-4 d-flex flex-row align-items-center', isKabagKlaim ? 'bg-light-dark border-dark' : 'bg-light border-gray-300']">
-          <KTIcon icon-name="verify" :icon-class="`fs-2hx me-3 text-${isKabagKlaim ? 'dark' : 'muted'}`" />
-          <div>
-            <span class="fw-bold d-block fs-7 text-gray-800">Otoritas Kepala Bagian Klaim</span>
-            <span class="fs-9 text-muted" v-if="isKabagKlaim">Anda Aktif. Berwenang untuk menyetujui & menandatangani (E-sign) Memo Bayar.</span>
-            <span class="fs-9 text-muted" v-else>Nonaktif. Masuk sebagai akun Kabag Klaim untuk TTE Memo Bayar.</span>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-4">
-        <div :class="['card border-dashed p-4 d-flex flex-row align-items-center', isKeuangan ? 'bg-light-success border-success' : 'bg-light border-gray-300']">
-          <KTIcon icon-name="wallet" :icon-class="`fs-2hx me-3 text-${isKeuangan ? 'success' : 'muted'}`" />
-          <div>
-            <span class="fw-bold d-block fs-7 text-gray-800">Otoritas Staf Keuangan</span>
-            <span class="fs-9 text-muted" v-if="isKeuangan">Anda Aktif. Berwenang untuk melakukan input realisasi pembayaran transfer bank & upload bukti bayar.</span>
-            <span class="fs-9 text-muted" v-else>Nonaktif. Masuk sebagai akun Keuangan untuk mencatat transfer pembayaran.</span>
-          </div>
+  <div class="d-flex flex-column flex-column-fluid">
+    <!-- Toolbar -->
+    <div class="app-toolbar py-3 py-lg-6">
+      <div class="d-flex flex-stack flex-wrap gap-2 w-100">
+        <div class="page-title d-flex flex-column justify-content-center flex-wrap me-3">
+          <h1 class="page-heading d-flex text-dark fw-bold fs-3 flex-column justify-content-center my-0">
+            Realisasi & Pembayaran Klaim
+          </h1>
+          <ul class="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
+            <li class="breadcrumb-item text-muted">Aplikasi</li>
+            <li class="breadcrumb-item"><span class="bullet bg-gray-500 w-5px h-2px"></span></li>
+            <li class="breadcrumb-item text-muted">Realisasi & Pembayaran</li>
+            <li class="breadcrumb-item"><span class="bullet bg-gray-500 w-5px h-2px"></span></li>
+            <li class="breadcrumb-item text-dark">Daftar Antrean</li>
+          </ul>
         </div>
       </div>
     </div>
 
-    <!-- MAIN CARD -->
-    <div class="card card-flush shadow-sm">
-      <div class="card-header border-0 pt-6">
-        <!-- Tabs For Payment Steps -->
-        <div class="card-title">
-          <div class="nav-group nav-group-outline border-primary">
-            <button
-              v-for="tab in paymentTabs"
-              :key="tab.id"
-              @click="activeStep = tab.id"
-              :class="['btn btn-sm btn-color-muted btn-active btn-active-primary px-4 fw-bold', activeStep === tab.id ? 'active' : '']"
-            >
-              {{ tab.label }}
-              <span :class="`badge badge-xs fs-8 ms-2 badge-light-${tab.badgeColor}`" v-if="tab.count > 0">{{ tab.count }}</span>
-            </button>
+    <!-- Main content -->
+    <div class="app-content flex-column-fluid">
+      <!-- Container -->
+      <div class="app-container container-fluid p-0">
+        <!-- Roles Info banner -->
+        <div class="row g-5 mb-8">
+          <div class="col-md-4">
+            <div :class="['card border-dashed p-4 d-flex flex-row align-items-center', isKlaim ? 'bg-light-primary border-primary' : 'bg-light border-gray-300']">
+              <KTIcon icon-name="document" :icon-class="`fs-2hx me-3 text-${isKlaim ? 'primary' : 'muted'}`" />
+              <div>
+                <span class="fw-bold d-block fs-7 text-gray-800">Otoritas Staf Klaim Jamkrida</span>
+                <span class="fs-9 text-muted" v-if="isKlaim">Anda Aktif. Berwenang untuk menerbitkan Memo Bayar dan mengirimkan bukti transfer ke Mitra.</span>
+                <span class="fs-9 text-muted" v-else>Nonaktif. Masuk sebagai akun Staf Klaim untuk menerbitkan memo/bukti bayar.</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div :class="['card border-dashed p-4 d-flex flex-row align-items-center', isKabagKlaim ? 'bg-light-dark border-dark' : 'bg-light border-gray-300']">
+              <KTIcon icon-name="verify" :icon-class="`fs-2hx me-3 text-${isKabagKlaim ? 'dark' : 'muted'}`" />
+              <div>
+                <span class="fw-bold d-block fs-7 text-gray-800">Otoritas Kepala Bagian Klaim</span>
+                <span class="fs-9 text-muted" v-if="isKabagKlaim">Anda Aktif. Berwenang untuk menyetujui & menandatangani (E-sign) Memo Bayar.</span>
+                <span class="fs-9 text-muted" v-else>Nonaktif. Masuk sebagai akun Kabag Klaim untuk TTE Memo Bayar.</span>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div :class="['card border-dashed p-4 d-flex flex-row align-items-center', isKeuangan ? 'bg-light-success border-success' : 'bg-light border-gray-300']">
+              <KTIcon icon-name="wallet" :icon-class="`fs-2hx me-3 text-${isKeuangan ? 'success' : 'muted'}`" />
+              <div>
+                <span class="fw-bold d-block fs-7 text-gray-800">Otoritas Staf Keuangan</span>
+                <span class="fs-9 text-muted" v-if="isKeuangan">Anda Aktif. Berwenang untuk melakukan input realisasi pembayaran transfer bank & upload bukti bayar.</span>
+                <span class="fs-9 text-muted" v-else>Nonaktif. Masuk sebagai akun Keuangan untuk mencatat transfer pembayaran.</span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Card Body -->
-      <div class="card-body pt-3">
-        <div v-if="loading" class="text-center py-15">
+        <!-- MAIN CARD (Varian D: Standard Reusable UiCard Component) -->
+        <UiCard
+          title="Realisasi & Pembayaran Klaim"
+          subtitle="Proses penerbitan Memo Bayar, TTE Kabag, hingga realisasi transfer dana"
+          icon="ki-solid ki-bill"
+          variant="primary"
+        >
+      <template #actions>
+        <!-- Tabs For Payment Steps -->
+        <div class="nav-group nav-group-outline border-primary">
+          <button
+            v-for="tab in paymentTabs"
+            :key="tab.id"
+            @click="activeStep = tab.id"
+            :class="['btn btn-sm btn-color-muted btn-active btn-active-primary px-4 fw-bold', activeStep === tab.id ? 'active' : '']"
+          >
+            {{ tab.label }}
+            <span :class="`badge badge-xs fs-8 ms-2 badge-light-${tab.badgeColor}`" v-if="tab.count > 0">{{ tab.count }}</span>
+          </button>
+        </div>
+      </template>
+
+      <div v-if="loading" class="text-center py-15">
           <span class="spinner-border text-primary" role="status"></span>
           <span class="text-gray-500 d-block mt-2">Memuat antrean...</span>
         </div>
@@ -191,109 +214,104 @@
             </tbody>
           </table>
         </div>
-      </div>
-    </div>
+      </UiCard>
 
-    <!-- MEMO BAYAR CREATION MODAL -->
-    <div v-if="showMemoModal && selectedClaim" class="modal fade show d-block" style="background: rgba(0,0,0,0.5); overflow-y:auto;">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title fw-bold">Pembuatan Memo Bayar Klaim</h5>
-            <button type="button" class="btn-close" @click="showMemoModal = false"></button>
+    <!-- MEMO BAYAR CREATION MODAL (Using Reusable UiModal) -->
+    <UiModal
+      v-model="showMemoModal"
+      title="Pembuatan Memo Bayar Klaim"
+      icon="ki-solid ki-document"
+      variant="primary"
+      :showDefaultFooter="false"
+    >
+      <form v-if="selectedClaim" @submit.prevent="submitMemo">
+        <div class="bg-light p-4 rounded mb-6 fs-7 text-start">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Kode Klaim</span>
+            <span class="fw-bold text-gray-900">{{ selectedClaim.kodeKlaim }}</span>
           </div>
-          <form @submit.prevent="submitMemo">
-            <div class="modal-body">
-              <div class="bg-light p-4 rounded mb-6 fs-7">
-                <div class="d-flex justify-content-between mb-2">
-                  <span class="text-muted">Kode Klaim</span>
-                  <span class="fw-bold text-gray-900">{{ selectedClaim.kodeKlaim }}</span>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                  <span class="text-muted">Nama Debitur</span>
-                  <span class="fw-bold text-gray-900">{{ selectedClaim.sertifikatPenjaminan?.namaDebitur }}</span>
-                </div>
-                <div class="d-flex justify-content-between">
-                  <span class="text-muted fw-bold text-primary">Nominal Memo Bayar</span>
-                  <span class="fw-bold text-primary fs-6">{{ formatCurrency(selectedClaim.nilaiKlaim) }}</span>
-                </div>
-              </div>
-
-              <div class="fv-row mb-6">
-                <label class="required fs-6 fw-semibold mb-2">Nama Penerima</label>
-                <input type="text" class="form-control form-control-solid" v-model="memoForm.namaPenerima" required />
-              </div>
-
-              <div class="row">
-                <div class="col-md-7 fv-row mb-6">
-                  <label class="required fs-6 fw-semibold mb-2">Bank Penerima</label>
-                  <input type="text" class="form-control form-control-solid" v-model="memoForm.bankPenerima" required />
-                </div>
-                <div class="col-md-5 fv-row mb-6">
-                  <label class="required fs-6 fw-semibold mb-2">No. Rekening</label>
-                  <input type="text" class="form-control form-control-solid" v-model="memoForm.noRekeningPenerima" required />
-                </div>
-              </div>
-
-              <span class="text-muted fs-8">Data rekening diambil dari data Mitra terdaftar. Periksa kembali sebelum menerbitkan memo — memo akan diteruskan ke Kepala Bagian Klaim untuk persetujuan & TTE.</span>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-light btn-sm" @click="showMemoModal = false">Batal</button>
-              <button type="submit" class="btn btn-primary btn-sm">Terbitkan Memo</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- PAYMENT RECORDING MODAL -->
-    <div v-if="showPaymentModal && selectedClaim" class="modal fade show d-block" style="background: rgba(0,0,0,0.5); overflow-y:auto;">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title fw-bold">Pencatatan Pembayaran Klaim</h5>
-            <button type="button" class="btn-close" @click="showPaymentModal = false"></button>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Nama Debitur</span>
+            <span class="fw-bold text-gray-900">{{ selectedClaim.sertifikatPenjaminan?.namaDebitur }}</span>
           </div>
-          <form @submit.prevent="submitPayment">
-            <div class="modal-body">
-              <div class="bg-light p-4 rounded mb-6 fs-7">
-                <div class="d-flex justify-content-between mb-2">
-                  <span class="text-muted">Kode Klaim</span>
-                  <span class="fw-bold text-gray-900">{{ selectedClaim.kodeKlaim }}</span>
-                </div>
-                <div class="d-flex justify-content-between mb-2">
-                  <span class="text-muted">Nama Debitur</span>
-                  <span class="fw-bold text-gray-900">{{ selectedClaim.sertifikatPenjaminan?.namaDebitur }}</span>
-                </div>
-                <div class="d-flex justify-content-between">
-                  <span class="text-muted fw-bold text-primary">Nominal Transfer</span>
-                  <span class="fw-bold text-primary fs-6">{{ formatCurrency(selectedClaim.nilaiKlaim) }}</span>
-                </div>
-              </div>
-
-              <div class="fv-row mb-6">
-                <label class="required fs-6 fw-semibold mb-2">Tanggal Pembayaran / Transfer</label>
-                <input type="date" class="form-control form-control-solid" v-model="paymentForm.tanggalBayar" required />
-              </div>
-
-              <div class="fv-row mb-6">
-                <label class="required fs-6 fw-semibold mb-2">Nomor Pembayaran (No. Referensi Transfer)</label>
-                <input type="text" class="form-control form-control-solid" v-model="paymentForm.nomorReferensiTransfer" placeholder="Contoh: TRF/20260803/000123" required />
-                <span class="text-muted fs-8">Nomor referensi/kwitansi dari sistem transfer bank Jamkrida.</span>
-              </div>
-
-              <div class="fv-row mb-6">
-                <label class="required fs-6 fw-semibold mb-2">Unggah Bukti Transfer Bank (PDF/Image)</label>
-                <input type="file" @change="onSelectReceipt" class="form-control form-control-solid" required />
-                <span class="text-muted fs-8">Kwitansi/Receipt transfer bank Jamkrida ke rekening Mitra.</span>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-light btn-sm" @click="showPaymentModal = false">Batal</button>
-              <button type="submit" class="btn btn-success btn-sm">Simpan Pembayaran</button>
-            </div>
-          </form>
+          <div class="d-flex justify-content-between">
+            <span class="text-muted fw-bold text-primary">Nominal Memo Bayar</span>
+            <span class="fw-bold text-primary fs-6">{{ formatCurrency(selectedClaim.nilaiKlaim) }}</span>
+          </div>
         </div>
+
+        <div class="fv-row mb-6 text-start">
+          <label class="required fs-6 fw-semibold mb-2">Nama Penerima</label>
+          <input type="text" class="form-control form-control-solid" v-model="memoForm.namaPenerima" required />
+        </div>
+
+        <div class="row text-start">
+          <div class="col-md-7 fv-row mb-6">
+            <label class="required fs-6 fw-semibold mb-2">Bank Penerima</label>
+            <input type="text" class="form-control form-control-solid" v-model="memoForm.bankPenerima" required />
+          </div>
+          <div class="col-md-5 fv-row mb-6">
+            <label class="required fs-6 fw-semibold mb-2">No. Rekening</label>
+            <input type="text" class="form-control form-control-solid" v-model="memoForm.noRekeningPenerima" required />
+          </div>
+        </div>
+
+        <span class="text-muted fs-8 d-block text-start mb-6">Data rekening diambil dari data Mitra terdaftar. Periksa kembali sebelum menerbitkan memo — memo akan diteruskan ke Kepala Bagian Klaim untuk persetujuan & TTE.</span>
+
+        <div class="d-flex justify-content-end gap-2">
+          <button type="button" class="btn btn-light btn-sm" @click="showMemoModal = false">Batal</button>
+          <button type="submit" class="btn btn-primary btn-sm">Terbitkan Memo</button>
+        </div>
+      </form>
+    </UiModal>
+
+    <!-- PAYMENT RECORDING MODAL (Using Reusable UiModal) -->
+    <UiModal
+      v-model="showPaymentModal"
+      title="Pencatatan Pembayaran Klaim"
+      icon="ki-solid ki-wallet"
+      variant="success"
+      :showDefaultFooter="false"
+    >
+      <form v-if="selectedClaim" @submit.prevent="submitPayment">
+        <div class="bg-light p-4 rounded mb-6 fs-7 text-start">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Kode Klaim</span>
+            <span class="fw-bold text-gray-900">{{ selectedClaim.kodeKlaim }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Nama Debitur</span>
+            <span class="fw-bold text-gray-900">{{ selectedClaim.sertifikatPenjaminan?.namaDebitur }}</span>
+          </div>
+          <div class="d-flex justify-content-between">
+            <span class="text-muted fw-bold text-primary">Nominal Transfer</span>
+            <span class="fw-bold text-primary fs-6">{{ formatCurrency(selectedClaim.nilaiKlaim) }}</span>
+          </div>
+        </div>
+
+        <div class="fv-row mb-6 text-start">
+          <label class="required fs-6 fw-semibold mb-2">Tanggal Pembayaran / Transfer</label>
+          <input type="date" class="form-control form-control-solid" v-model="paymentForm.tanggalBayar" required />
+        </div>
+
+        <div class="fv-row mb-6 text-start">
+          <label class="required fs-6 fw-semibold mb-2">Nomor Pembayaran (No. Referensi Transfer)</label>
+          <input type="text" class="form-control form-control-solid" v-model="paymentForm.nomorReferensiTransfer" placeholder="Contoh: TRF/20260803/000123" required />
+          <span class="text-muted fs-8">Nomor referensi/kwitansi dari sistem transfer bank Jamkrida.</span>
+        </div>
+
+        <div class="fv-row mb-6 text-start">
+          <label class="required fs-6 fw-semibold mb-2">Unggah Bukti Transfer Bank (PDF/Image)</label>
+          <input type="file" @change="onSelectReceipt" class="form-control form-control-solid" required />
+          <span class="text-muted fs-8">Kwitansi/Receipt transfer bank Jamkrida ke rekening Mitra.</span>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-6">
+          <button type="button" class="btn btn-light btn-sm" @click="showPaymentModal = false">Batal</button>
+          <button type="submit" class="btn btn-success btn-sm">Simpan Pembayaran</button>
+        </div>
+      </form>
+    </UiModal>
       </div>
     </div>
   </div>
@@ -305,9 +323,15 @@ import { useRoute } from "vue-router";
 import ApiService from "@/core/services/ApiService";
 import { useAuthStore } from "@/stores/auth";
 import Swal from "sweetalert2/dist/sweetalert2.js";
+import UiCard from "@/components/ui/UiCard.vue";
+import UiModal from "@/components/ui/UiModal.vue";
 
 export default defineComponent({
   name: "pembayaran-klaim",
+  components: {
+    UiCard,
+    UiModal
+  },
   setup() {
     const route = useRoute();
     const activeStep = ref<string>("semua");
